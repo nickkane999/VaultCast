@@ -1,0 +1,32 @@
+.nav {
+  width: 100%;
+  padding: 1rem 2rem;
+  background-color: var(--background);
+  border-bottom: 1px solid var(--gray-alpha-200);
+}
+
+.nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+}
+
+.nav a {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav a:hover {
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav a:hover {
+    color: #999;
+  }
+}
