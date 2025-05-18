@@ -19,6 +19,9 @@ const config: NextConfig = {
       },
     ];
   },
+  // Allow connections from any host
+  hostname: "0.0.0.0",
+  port: 3000,
 };
 
 export default config;

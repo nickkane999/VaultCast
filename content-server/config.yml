@@ -1,0 +1,19 @@
+# Tunnel configuration
+tunnel: # You'll get this after creating the tunnel
+credentials-file: # You'll get this after creating the tunnel
+
+# Configure ingress rules
+ingress:
+  # Route for the Next.js frontend
+  - hostname: vaultcast.yourdomain.com # Replace with your domain
+    service: http://localhost:3000
+
+  # Route for the content server
+  - hostname: content.vaultcast.yourdomain.com # Replace with your domain
+    service: http://localhost:3001
+
+  # Catch-all rule
+  - service: http_status:404
+
+# Log file location
+logfile: C:\Cloudflared\cloudflared.log
