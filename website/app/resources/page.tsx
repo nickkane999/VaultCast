@@ -7,7 +7,7 @@ import CommonDecisionList from "../components/CommonDecisionList";
 import { Tabs, Tab, Box, Typography, CircularProgress } from "@mui/material";
 
 export default function Page() {
-  const [data, setData] = useState([]);
+  const [allData, setAllData] = useState([]);
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -15,8 +15,13 @@ export default function Page() {
     async function fetchData() {
       setLoading(true);
       const res = await fetch("/api/events");
-      const fetchedData = await res.json();
-      setData(fetchedData);
+      if (res.ok) {
+        const fetchedData = await res.json();
+        setAllData(fetchedData);
+      } else {
+        console.error("API fetch failed:", await res.json());
+        setAllData([]);
+      }
       setLoading(false);
     }
     fetchData();
@@ -25,6 +30,9 @@ export default function Page() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+
+  const calendarEvents = allData.filter((item: any) => item.type === "calendar");
+  const commonDecisions = allData.filter((item: any) => item.type === "common_decision").map((item: any) => ({ id: item.id, name: item.name }));
 
   return (
     <div className={styles.page}>
@@ -36,8 +44,8 @@ export default function Page() {
         <Tab label="Common Decisions" />
       </Tabs>
       <Box sx={{ mt: 2 }}>
-        {tabValue === 0 && (loading ? <CircularProgress /> : <EventListClient initialEvents={data} />)}
-        {tabValue === 1 && <CommonDecisionList />}
+        {tabValue === 0 && (loading ? <CircularProgress /> : <EventListClient initialEvents={calendarEvents} />)}
+        {tabValue === 1 && (loading ? <CircularProgress /> : <CommonDecisionList initialDecisions={commonDecisions} />)}
       </Box>
     </div>
   );

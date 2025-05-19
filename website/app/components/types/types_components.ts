@@ -2,6 +2,7 @@ export type Event = {
   id: string | number;
   name: string;
   date: string;
+  type: "calendar" | "common_decision";
 };
 
 export type EventCardProps = {
@@ -15,5 +16,5 @@ export type EventCardProps = {
 
 export type CommonDecision = {
   id: string | number;
-  name: string; // No date field
+  name: string;
 };

@@ -41,7 +41,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
       const response = await fetch(`/api/events?id=${updatedEvent.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: updatedEvent.name, date: updatedEvent.date }),
+        body: JSON.stringify({ name: updatedEvent.name, date: updatedEvent.date, type: "calendar" }),
       });
       if (response.ok) {
         const updatedFromServer = await response.json(); // Get the updated event from server if needed
@@ -64,16 +64,22 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     e.preventDefault();
     if (!newEvent.name || !newEvent.date) return;
     setLoading(true);
-    const res = await fetch("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newEvent),
-    });
-    if (res.ok) {
-      const added = await res.json();
-      setEvents((prev: any) => [...prev, added]);
-      setNewEvent({ name: "", date: "" });
-      setShowForm(false);
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newEvent.name, date: newEvent.date, type: "calendar" }),
+      });
+      if (response.ok) {
+        const addedEvent = await response.json();
+        setEvents((prev) => [...prev, addedEvent]);
+        setNewEvent({ name: "", date: "" });
+        setShowForm(false);
+      } else {
+        console.error("Failed to add event:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error adding event:", error);
     }
     setLoading(false);
   };
