@@ -1,15 +1,44 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import styles from "../page.module.css";
 import EventListClient from "../components/EventListClient";
+import CommonDecisionList from "../components/CommonDecisionList";
+import { Tabs, Tab, Box, Typography, CircularProgress } from "@mui/material";
 
-type Event = { id: string | number; name: string; date: string };
+export default function Page() {
+  const [data, setData] = useState([]);
+  const [tabValue, setTabValue] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-export default async function Page() {
-  const res = await fetch("http://localhost:3000/api/events");
-  const data = await res.json();
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const res = await fetch("/api/events");
+      const fetchedData = await res.json();
+      setData(fetchedData);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   return (
     <div className={styles.page}>
-      <h1>Personal Calendar</h1>
-      <EventListClient initialEvents={data} />
+      <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
+        Decision Helper
+      </Typography>
+      <Tabs value={tabValue} onChange={handleTabChange} aria-label="Decision Helper Tabs">
+        <Tab label="Calendar" />
+        <Tab label="Common Decisions" />
+      </Tabs>
+      <Box sx={{ mt: 2 }}>
+        {tabValue === 0 && (loading ? <CircularProgress /> : <EventListClient initialEvents={data} />)}
+        {tabValue === 1 && <CommonDecisionList />}
+      </Box>
     </div>
   );
 }

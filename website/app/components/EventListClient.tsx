@@ -16,6 +16,44 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     setDecisions((prev) => ({ ...prev, [id]: randomNum }));
   };
 
+  const handleDelete = async (id: string | number) => {
+    try {
+      const response = await fetch(`/api/events?id=${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setEvents((prev) => prev.filter((event) => event.id !== id));
+      } else {
+        console.error("Failed to delete event:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
+  };
+
+  const handleEdit = (id: string | number) => {
+    console.log(`Edit event with ID: ${id}`); // Placeholder for edit functionality
+    // You can expand this to open a form or update the event
+  };
+
+  const handleUpdate = async (updatedEvent: Event) => {
+    try {
+      const response = await fetch(`/api/events?id=${updatedEvent.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: updatedEvent.name, date: updatedEvent.date }),
+      });
+      if (response.ok) {
+        const updatedFromServer = await response.json(); // Get the updated event from server if needed
+        setEvents((prev) => prev.map((event) => (event.id === updatedEvent.id ? { ...event, ...updatedEvent } : event)));
+      } else {
+        console.error("Failed to update event:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
+  };
+
   const handleAddCard = () => setShowForm(true);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,8 +98,8 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
         </Box>
       )}
       <Box sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {events.map((event: any) => (
-          <EventCard key={event.id} event={event} decision={decisions[event.id]} onDecision={handleDecision} />
+        {events.map((event: Event) => (
+          <EventCard key={event.id} event={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={() => handleEdit(event.id)} onDelete={() => handleDelete(event.id)} onUpdate={handleUpdate} />
         ))}
       </Box>
     </Container>
