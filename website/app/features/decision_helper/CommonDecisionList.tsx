@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, Button, Card, CardContent, Typography, IconButton, TextField } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import CardComponent from "./CardComponent";
-import { CommonDecision } from "./types/types_components";
+import { CommonDecision } from "../../components/types/types_components";
 import styles from "./DecisionHelper.module.css";
 
 export default function CommonDecisionList({ initialDecisions = [] }: { initialDecisions: CommonDecision[] }) {

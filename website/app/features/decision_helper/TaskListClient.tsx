@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import CardComponent from "./CardComponent";
-import { Task, Event, CommonDecision } from "./types/types_components";
+import { Task, Event, CommonDecision } from "./types";
 import { Button, TextField, Box, CircularProgress, Checkbox, FormControlLabel, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 import Autocomplete from "@mui/material/Autocomplete";

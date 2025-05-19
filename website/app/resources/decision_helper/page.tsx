@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import styles from "../page.module.css";
-import EventListClient from "../components/EventListClient";
-import CommonDecisionList from "../components/CommonDecisionList";
-import TaskListClient from "../components/TaskListClient";
+import styles from "../../page.module.css";
+import EventListClient from "../../features/decision_helper/EventListClient";
+import CommonDecisionList from "../../features/decision_helper/CommonDecisionList";
+import TaskListClient from "../../features/decision_helper/TaskListClient";
 import { Tabs, Tab, Box, Typography, CircularProgress } from "@mui/material";
 
 export default function Page() {

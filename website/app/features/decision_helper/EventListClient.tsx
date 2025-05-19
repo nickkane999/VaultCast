@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import CardComponent from "./CardComponent";
-import { Event, CommonDecision, Task } from "./types/types_components";
+import { Event, CommonDecision, Task } from "../../components/types/types_components";
 import { Button, TextField, Box, CircularProgress, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 
@@ -117,17 +117,19 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
 
   const getFilteredAndSortedEvents = () => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Get today's date at local midnight for comparison
+    const todayLocalMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const filtered = events.filter((event) => {
       if (event.type !== "calendar") return false; // Only filter calendar events by date
-      const eventDate = new Date((event as Event).date);
+      // Parse the YYYY-MM-DD date string as local time
+      const [year, month, day] = (event as Event).date.split("-").map(Number);
+      const eventDateLocalMidnight = new Date(year, month - 1, day); // Month is 0-indexed
 
       // Hide past dates filter
       if (hidePastDates) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set time to midnight for accurate comparison
-        if (eventDate < today) {
+        // If the event date (at local midnight) is before today (at local midnight)
+        if (eventDateLocalMidnight.getTime() < todayLocalMidnight.getTime()) {
           return false;
         }
       }
@@ -136,28 +138,32 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
         case "All":
           return true;
         case "Current Year":
-          return eventDate.getFullYear() === now.getFullYear();
+          return eventDateLocalMidnight.getFullYear() === now.getFullYear();
         case "Current Month":
-          return eventDate.getFullYear() === now.getFullYear() && eventDate.getMonth() === now.getMonth();
+          return eventDateLocalMidnight.getFullYear() === now.getFullYear() && eventDateLocalMidnight.getMonth() === now.getMonth();
         case "Current Week":
-          // This is a simplified check: within the last 7 days including today
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(today.getDate() - 6);
-          return eventDate >= sevenDaysAgo && eventDate <= today;
+          const startOfWeek = new Date(todayLocalMidnight);
+          startOfWeek.setDate(todayLocalMidnight.getDate() - todayLocalMidnight.getDay()); // Sunday as the start of the week
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+          // Compare event date (at local midnight) with the start and end of the week (at local midnight)
+          return eventDateLocalMidnight.getTime() >= startOfWeek.getTime() && eventDateLocalMidnight.getTime() <= endOfWeek.getTime();
         case "Today":
-          return eventDate.getFullYear() === today.getFullYear() && eventDate.getMonth() === today.getMonth() && eventDate.getDate() === today.getDate();
+          return eventDateLocalMidnight.getTime() === todayLocalMidnight.getTime();
         default:
           return true;
       }
     });
 
     const sorted = [...filtered].sort((a, b) => {
-      const dateA = new Date((a as Event).date).getTime();
-      const dateB = new Date((b as Event).date).getTime();
+      const dateA = new Date((a as Event).date);
+      const dateB = new Date((b as Event).date);
+      // Sort based on the actual date object, not just local midnight, to maintain time order if present
       if (sortOrder === "Ascending") {
-        return dateA - dateB;
+        return dateA.getTime() - dateB.getTime();
       } else {
-        return dateB - dateA;
+        return dateB.getTime() - dateA.getTime();
       }
     });
 

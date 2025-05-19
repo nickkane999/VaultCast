@@ -24,8 +24,9 @@ if (process.env.NODE_ENV === "development") {
   clientPromise = client.connect();
 }
 
-export async function getEventsCollection(): Promise<Collection> {
+// Generic function to get a MongoDB collection by name
+export async function getCollection(collectionName: string): Promise<Collection> {
   const client = await clientPromise;
-  const db: Db = client.db();
-  return db.collection("events");
+  const db: Db = client.db(); // Use the default database name from the connection string
+  return db.collection(collectionName);
 }

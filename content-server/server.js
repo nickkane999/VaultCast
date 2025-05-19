@@ -87,6 +87,23 @@ app.get("/videos/:filename", (req, res) => {
   }
 });
 
+// New endpoint to list files in media/ai_messenger directory
+app.get("/api/files/ai_messenger", (req, res) => {
+  const targetDir = path.join(__dirname, "media", "ai_messenger");
+
+  fs.readdir(targetDir, (err, files) => {
+    if (err) {
+      console.error("Error listing files in", targetDir, ":", err);
+      // Send a more generic error in production for security
+      return res.status(500).json({ error: "Unable to list files" });
+    }
+
+    // Filter out directories if necessary, here we assume all are files or we want to include all entries
+    // For now, just return the list of names
+    res.json({ files: files });
+  });
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });

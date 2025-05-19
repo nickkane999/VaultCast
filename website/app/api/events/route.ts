@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEventsCollection } from "@/app/api/mongodb";
+import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
 
 function isValidRequest(body: any, id?: string | null) {
@@ -25,7 +25,7 @@ function isValidRequest(body: any, id?: string | null) {
 }
 
 async function updateEvent(id: string, updateData: { name?: string; type?: string; date?: string; is_completed?: boolean }) {
-  const collection = await getEventsCollection();
+  const collection = await getCollection("events");
   const result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
   if (result.matchedCount === 0) {
     return null; // Event not found or not modified
@@ -35,7 +35,7 @@ async function updateEvent(id: string, updateData: { name?: string; type?: strin
 }
 
 export async function GET() {
-  const collection = await getEventsCollection();
+  const collection = await getCollection("events");
   const events = await collection.find({}).toArray();
   const result = events.map((e: any) => ({
     id: e._id.toString(),
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   if (type === "calendar") doc.date = date;
   if (type === "task") doc.is_completed = is_completed;
   if (tags !== undefined) doc.tags = tags;
-  const collection = await getEventsCollection();
+  const collection = await getCollection("events");
   const res = await collection.insertOne(doc);
   return NextResponse.json({ id: res.insertedId.toString(), ...doc }, { status: 201 });
 }
@@ -70,7 +70,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: "ID is required" }, { status: 400 });
   }
-  const collection = await getEventsCollection();
+  const collection = await getCollection("events");
   const result = await collection.deleteOne({ _id: new ObjectId(id as string) });
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });

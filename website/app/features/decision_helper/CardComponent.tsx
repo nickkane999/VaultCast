@@ -1,6 +1,6 @@
 import { Card, CardContent, Typography, Button, IconButton, Box, Checkbox, FormControlLabel } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { EventCardProps, Event, CommonDecision, Task } from "./types/types_components";
+import { EventCardProps, Event, CommonDecision, Task } from "./types";
 import styles from "./DecisionHelper.module.css";
 
 interface CardComponentProps {
