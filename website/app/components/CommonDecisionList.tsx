@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Card, CardContent, Typography, IconButton, TextField } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import CardComponent from "./CardComponent";
 import { CommonDecision } from "./types/types_components";
 
 export default function CommonDecisionList({ initialDecisions = [] }: { initialDecisions: CommonDecision[] }) {
@@ -10,6 +11,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
   const [editingId, setEditingId] = useState<string | number | null>(null); // For editing state
   const [editedDecision, setEditedDecision] = useState({ name: "" });
   const [loading, setLoading] = useState(false);
+  const [commonDecisionResults, setCommonDecisionResults] = useState<Record<string, number>>({});
 
   const handleAddCard = () => setShowForm(true);
 
@@ -29,11 +31,11 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
       const response = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newDecision.name, type: "common_decision" }), // Set type to 'common_decision'
+        body: JSON.stringify({ name: newDecision.name, type: "common_decision" }),
       });
       if (response.ok) {
-        const addedDecision = await response.json(); // Assuming the API returns the new decision
-        setDecisions((prev) => [...prev, { id: addedDecision.id, name: addedDecision.name }]);
+        const addedDecision = await response.json();
+        setDecisions((prev) => [...prev, { id: addedDecision.id, name: addedDecision.name, type: "common_decision" }]);
         setNewDecision({ name: "" });
         setShowForm(false);
       } else {
@@ -60,7 +62,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
       });
       if (response.ok) {
         const updatedDecision = await response.json();
-        setDecisions((prev) => prev.map((decision) => (decision.id === editingId ? { id: updatedDecision.id, name: updatedDecision.name } : decision)));
+        setDecisions((prev) => prev.map((decision) => (decision.id === editingId ? { ...decision, name: updatedDecision.name } : decision)));
         setEditingId(null);
         setEditedDecision({ name: "" });
       } else {
@@ -98,6 +100,11 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
     setEditedDecision({ name });
   };
 
+  const handleDecision = (id: string | number) => {
+    const randomNum = Math.floor(Math.random() * 100) + 1;
+    setCommonDecisionResults((prev) => ({ ...prev, [id]: randomNum }));
+  };
+
   return (
     <Box>
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
@@ -117,7 +124,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
         </Box>
       )}
       <Box sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {decisions.map((decision) =>
+        {decisions.map((decision: CommonDecision) =>
           editingId === decision.id ? (
             <Box component="form" key={decision.id} onSubmit={handleEditFormSubmit} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
               <TextField name="name" label="Edit Decision name" value={editedDecision.name} onChange={handleEditFormChange} fullWidth margin="normal" required />
@@ -131,21 +138,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
               </Box>
             </Box>
           ) : (
-            <Card key={decision.id} variant="outlined" sx={{ width: "100%", borderRadius: 2, boxShadow: 2, p: 2, position: "relative" }}>
-              <Box sx={{ position: "absolute", top: 8, right: 8 }}>
-                <IconButton onClick={() => handleEdit(decision.id, decision.name)} aria-label="Edit" size="small">
-                  <EditIcon />
-                </IconButton>
-                <IconButton onClick={() => handleDelete(decision.id)} aria-label="Delete" size="small">
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-              <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6" component="div">
-                  {decision.name}
-                </Typography>
-              </CardContent>
-            </Card>
+            <CardComponent key={decision.id} item={decision} onEdit={() => handleEdit(decision.id, decision.name)} onDelete={handleDelete} onDecision={handleDecision} decision={commonDecisionResults[decision.id]} />
           )
         )}
       </Box>

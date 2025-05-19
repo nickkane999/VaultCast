@@ -32,7 +32,7 @@ export default function Page() {
   };
 
   const calendarEvents = allData.filter((item: any) => item.type === "calendar");
-  const commonDecisions = allData.filter((item: any) => item.type === "common_decision").map((item: any) => ({ id: item.id, name: item.name }));
+  const commonDecisions = allData.filter((item: any) => item.type === "common_decision").map((item: any) => ({ id: item.id, name: item.name, type: item.type }));
 
   return (
     <div className={styles.page}>
@@ -43,7 +43,7 @@ export default function Page() {
         <Tab label="Calendar" />
         <Tab label="Common Decisions" />
       </Tabs>
-      <Box sx={{ mt: 2 }}>
+      <Box sx={{ mt: 2, mx: "auto" }} width="100%">
         {tabValue === 0 && (loading ? <CircularProgress /> : <EventListClient initialEvents={calendarEvents} />)}
         {tabValue === 1 && (loading ? <CircularProgress /> : <CommonDecisionList initialDecisions={commonDecisions} />)}
       </Box>

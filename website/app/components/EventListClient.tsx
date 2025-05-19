@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
-import EventCard from "./EventCard";
-import { Event } from "./types/types_components";
-import { Button, TextField, Box, Container, CircularProgress } from "@mui/material";
+import CardComponent from "./CardComponent";
+import { Event, CommonDecision } from "./types/types_components";
+import { Button, TextField, Box, CircularProgress } from "@mui/material";
 
 export default function EventListClient({ initialEvents }: { initialEvents: Event[] }) {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [decisions, setDecisions] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
   const [newEvent, setNewEvent] = useState({ name: "", date: "" });
+  const [editingId, setEditingId] = useState<string | number | null>(null);
+  const [editedEvent, setEditedEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleDecision = (id: string | number) => {
@@ -31,27 +33,44 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     }
   };
 
-  const handleEdit = (id: string | number) => {
-    console.log(`Edit event with ID: ${id}`); // Placeholder for edit functionality
-    // You can expand this to open a form or update the event
+  const handleEdit = (item: Event | CommonDecision) => {
+    if (item.type === "calendar") {
+      console.log(`Edit event with ID: ${item.id}`);
+      setEditingId(item.id);
+      setEditedEvent(item as Event);
+    } else {
+      console.error("Invalid item type for edit");
+    }
   };
 
-  const handleUpdate = async (updatedEvent: Event) => {
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editedEvent) {
+      setEditedEvent({ ...editedEvent, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleEditFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editedEvent || !editedEvent.name || !editedEvent.date) return;
+    setLoading(true);
     try {
-      const response = await fetch(`/api/events?id=${updatedEvent.id}`, {
+      const response = await fetch(`/api/events?id=${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: updatedEvent.name, date: updatedEvent.date, type: "calendar" }),
+        body: JSON.stringify({ name: editedEvent.name, date: editedEvent.date, type: "calendar" }),
       });
       if (response.ok) {
-        const updatedFromServer = await response.json(); // Get the updated event from server if needed
-        setEvents((prev) => prev.map((event) => (event.id === updatedEvent.id ? { ...event, ...updatedEvent } : event)));
+        const updatedEvent = await response.json();
+        setEvents((prev) => prev.map((event) => (event.id === editingId ? updatedEvent : event)));
+        setEditingId(null);
+        setEditedEvent(null);
       } else {
         console.error("Failed to update event:", await response.json());
       }
     } catch (error) {
       console.error("Error updating event:", error);
     }
+    setLoading(false);
   };
 
   const handleAddCard = () => setShowForm(true);
@@ -85,7 +104,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
   };
 
   return (
-    <Container maxWidth="sm">
+    <Box width="100%">
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
         Add card
       </Button>
@@ -104,10 +123,33 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
         </Box>
       )}
       <Box sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {events.map((event: Event) => (
-          <EventCard key={event.id} event={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={() => handleEdit(event.id)} onDelete={() => handleDelete(event.id)} onUpdate={handleUpdate} />
-        ))}
+        {events.map((event: Event) =>
+          editingId === event.id ? (
+            <Box component="form" onSubmit={handleEditFormSubmit} key={event.id} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
+              <TextField name="name" label="Edit Event name" value={editedEvent?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
+              <TextField name="date" label="Event date" type="date" value={editedEvent?.date || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
+              <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                  {loading ? <CircularProgress size={24} /> : "Update"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditedEvent(null);
+                  }}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <CardComponent key={event.id} item={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={handleEdit} onDelete={handleDelete} />
+          )
+        )}
       </Box>
-    </Container>
+    </Box>
   );
 }

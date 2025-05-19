@@ -17,4 +17,5 @@ export type EventCardProps = {
 export type CommonDecision = {
   id: string | number;
   name: string;
+  type: "common_decision";
 };
