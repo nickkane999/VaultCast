@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import CardComponent from "./CardComponent";
-import { Event, CommonDecision } from "./types/types_components";
-import { Button, TextField, Box, CircularProgress } from "@mui/material";
+import { Event, CommonDecision, Task } from "./types/types_components";
+import { Button, TextField, Box, CircularProgress, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox } from "@mui/material";
+import styles from "./DecisionHelper.module.css";
 
 export default function EventListClient({ initialEvents }: { initialEvents: Event[] }) {
   const [events, setEvents] = useState<Event[]>(initialEvents);
@@ -12,6 +13,10 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editedEvent, setEditedEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [dateFilter, setDateFilter] = useState<string>("All");
+  const [sortOrder, setSortOrder] = useState<"Ascending" | "Descending">("Descending");
+  const [hidePastDates, setHidePastDates] = useState<boolean>(true);
 
   const handleDecision = (id: string | number) => {
     const randomNum = Math.floor(Math.random() * 100) + 1;
@@ -33,7 +38,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     }
   };
 
-  const handleEdit = (item: Event | CommonDecision) => {
+  const handleEdit = (item: Event | CommonDecision | Task) => {
     if (item.type === "calendar") {
       console.log(`Edit event with ID: ${item.id}`);
       setEditingId(item.id);
@@ -73,7 +78,14 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     setLoading(false);
   };
 
-  const handleAddCard = () => setShowForm(true);
+  const handleAddCard = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+    const day = String(today.getDate()).padStart(2, "0");
+    setNewEvent({ name: "", date: `${year}-${month}-${day}` });
+    setShowForm(true);
+  };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewEvent({ ...newEvent, [e.target.name]: e.target.value });
@@ -103,16 +115,87 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     setLoading(false);
   };
 
+  const getFilteredAndSortedEvents = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const filtered = events.filter((event) => {
+      if (event.type !== "calendar") return false; // Only filter calendar events by date
+      const eventDate = new Date((event as Event).date);
+
+      // Hide past dates filter
+      if (hidePastDates) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set time to midnight for accurate comparison
+        if (eventDate < today) {
+          return false;
+        }
+      }
+
+      switch (dateFilter) {
+        case "All":
+          return true;
+        case "Current Year":
+          return eventDate.getFullYear() === now.getFullYear();
+        case "Current Month":
+          return eventDate.getFullYear() === now.getFullYear() && eventDate.getMonth() === now.getMonth();
+        case "Current Week":
+          // This is a simplified check: within the last 7 days including today
+          const sevenDaysAgo = new Date(today);
+          sevenDaysAgo.setDate(today.getDate() - 6);
+          return eventDate >= sevenDaysAgo && eventDate <= today;
+        case "Today":
+          return eventDate.getFullYear() === today.getFullYear() && eventDate.getMonth() === today.getMonth() && eventDate.getDate() === today.getDate();
+        default:
+          return true;
+      }
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      const dateA = new Date((a as Event).date).getTime();
+      const dateB = new Date((b as Event).date).getTime();
+      if (sortOrder === "Ascending") {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    });
+
+    return sorted;
+  };
+
+  const displayedEvents = getFilteredAndSortedEvents();
+
   return (
-    <Box width="100%">
+    <Box className={styles.listContainer}>
+      <Box className={styles.filtersContainer} sx={{ mb: 2 }}>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="date-filter-label">Filter</InputLabel>
+          <Select labelId="date-filter-label" id="date-filter" value={dateFilter} label="Filter" onChange={(e) => setDateFilter(e.target.value as string)}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Current Year">Current Year</MenuItem>
+            <MenuItem value="Current Month">Current Month</MenuItem>
+            <MenuItem value="Current Week">Current Week</MenuItem>
+            <MenuItem value="Today">Today</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="sort-order-label">Order</InputLabel>
+          <Select labelId="sort-order-label" id="sort-order" value={sortOrder} label="Order" onChange={(e) => setSortOrder(e.target.value as "Ascending" | "Descending")}>
+            <MenuItem value="Ascending">Ascending</MenuItem>
+            <MenuItem value="Descending">Descending</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControlLabel control={<Checkbox checked={hidePastDates} onChange={(e) => setHidePastDates(e.target.checked)} />} label="Hide past dates" />
+      </Box>
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
         Add card
       </Button>
       {showForm && (
-        <Box component="form" onSubmit={handleFormSubmit} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
+        <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
           <TextField name="name" label="Event name" value={newEvent.name} onChange={handleFormChange} fullWidth margin="normal" required />
           <TextField name="date" label="Event date" type="date" value={newEvent.date} onChange={handleFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
-          <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+          <Box className={styles.formButtonsBox}>
             <Button type="submit" variant="contained" color="primary" disabled={loading}>
               {loading ? <CircularProgress size={24} /> : "Save"}
             </Button>
@@ -122,10 +205,10 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
           </Box>
         </Box>
       )}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {events.map((event: Event) =>
+      <Box className={styles.cardsColumnContainer}>
+        {displayedEvents.map((event: Event) =>
           editingId === event.id ? (
-            <Box component="form" onSubmit={handleEditFormSubmit} key={event.id} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
+            <Box component="form" onSubmit={handleEditFormSubmit} key={event.id} className={styles.formBox}>
               <TextField name="name" label="Edit Event name" value={editedEvent?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
               <TextField name="date" label="Event date" type="date" value={editedEvent?.date || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
               <Box sx={{ display: "flex", gap: 1, mt: 2 }}>

@@ -3,6 +3,7 @@ import { Box, Button, Card, CardContent, Typography, IconButton, TextField } fro
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import CardComponent from "./CardComponent";
 import { CommonDecision } from "./types/types_components";
+import styles from "./DecisionHelper.module.css";
 
 export default function CommonDecisionList({ initialDecisions = [] }: { initialDecisions: CommonDecision[] }) {
   const [decisions, setDecisions] = useState<CommonDecision[]>(initialDecisions);
@@ -106,14 +107,14 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
   };
 
   return (
-    <Box>
+    <Box className={styles.listContainer}>
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
         Add card
       </Button>
       {showForm && (
-        <Box component="form" onSubmit={handleFormSubmit} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
+        <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
           <TextField name="name" label="Decision name" value={newDecision.name} onChange={handleFormChange} fullWidth margin="normal" required />
-          <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+          <Box className={styles.formButtonsBox}>
             <Button type="submit" variant="contained" color="primary" disabled={loading}>
               {loading ? "Saving..." : "Save"}
             </Button>
@@ -123,10 +124,10 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
           </Box>
         </Box>
       )}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      <Box className={styles.cardsRowContainer}>
         {decisions.map((decision: CommonDecision) =>
           editingId === decision.id ? (
-            <Box component="form" key={decision.id} onSubmit={handleEditFormSubmit} sx={{ width: "100%", p: 2, borderRadius: 2, boxShadow: 2, mb: 2 }}>
+            <Box component="form" key={decision.id} onSubmit={handleEditFormSubmit} className={styles.formBox}>
               <TextField name="name" label="Edit Decision name" value={editedDecision.name} onChange={handleEditFormChange} fullWidth margin="normal" required />
               <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
                 <Button type="submit" variant="contained" color="primary" disabled={loading}>

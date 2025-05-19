@@ -14,8 +14,18 @@ export type EventCardProps = {
   onUpdate: (updatedEvent: Event) => void;
 };
 
-export type CommonDecision = {
+export interface CommonDecision {
   id: string | number;
   name: string;
   type: "common_decision";
-};
+}
+
+export interface Task {
+  id: string | number;
+  name: string;
+  type: "task";
+  is_completed: boolean;
+  tags?: string[];
+}
+
+export type Item = Event | CommonDecision | Task;

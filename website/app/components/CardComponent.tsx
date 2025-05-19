@@ -1,16 +1,18 @@
-import { Card, CardContent, Typography, Button, IconButton, Box } from "@mui/material";
+import { Card, CardContent, Typography, Button, IconButton, Box, Checkbox, FormControlLabel } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { EventCardProps, Event, CommonDecision } from "./types/types_components";
+import { EventCardProps, Event, CommonDecision, Task } from "./types/types_components";
+import styles from "./DecisionHelper.module.css";
 
 interface CardComponentProps {
-  item: Event | CommonDecision;
+  item: Event | CommonDecision | Task;
   onDecision?: (id: string | number) => void;
-  onEdit: (item: Event | CommonDecision) => void;
+  onEdit: (item: Event | CommonDecision | Task) => void;
   onDelete: (id: string | number) => void;
   decision?: number;
+  onToggleComplete?: (item: Task) => void;
 }
 
-export default function CardComponent({ item, decision, onDecision, onEdit, onDelete }: CardComponentProps) {
+export default function CardComponent({ item, decision, onDecision, onEdit, onDelete, onToggleComplete }: CardComponentProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -19,10 +21,10 @@ export default function CardComponent({ item, decision, onDecision, onEdit, onDe
     const options = { year: "numeric", month: "short", day: "numeric" } as const;
     return localDate.toLocaleDateString("en-US", options);
   };
-  const hasDecision = item.type === "calendar" || item.type === "common_decision";
+  const hasDecision = item.type === "calendar" || item.type === "common_decision" || item.type === "task";
 
   return (
-    <Card key={item.id} variant="outlined" sx={{ width: "100%", maxWidth: 1080, borderRadius: 2, boxShadow: 2, p: 2, position: "relative", mx: "auto" }}>
+    <Card key={item.id} variant="outlined" className={styles.cardContainer}>
       <Box sx={{ position: "absolute", top: 8, right: 8 }}>
         <IconButton onClick={() => onEdit(item)} aria-label="Edit" size="small">
           <EditIcon />
@@ -31,7 +33,7 @@ export default function CardComponent({ item, decision, onDecision, onEdit, onDe
           <DeleteIcon />
         </IconButton>
       </Box>
-      <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1 }}>
+      <CardContent className={styles.cardContent}>
         <Typography variant="h6" component="div">
           {item.name}
         </Typography>
@@ -40,8 +42,9 @@ export default function CardComponent({ item, decision, onDecision, onEdit, onDe
             {formatDate((item as Event).date)}
           </Typography>
         )}
-        {hasDecision && (
-          <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+        {item.type === "task" && (item as Task).is_completed !== undefined && <FormControlLabel control={<Checkbox checked={(item as Task).is_completed} onChange={() => onToggleComplete && onToggleComplete(item as Task)} />} label="Completed" />}
+        {(item.type === "calendar" || item.type === "common_decision") && hasDecision && (
+          <Box className={styles.buttonDecisionRow}>
             {onDecision && (
               <Button variant="contained" color="primary" onClick={() => onDecision(item.id)}>
                 Make decision
@@ -49,10 +52,24 @@ export default function CardComponent({ item, decision, onDecision, onEdit, onDe
             )}
           </Box>
         )}
+        {item.type === "task" && (
+          <Box className={styles.taskButtonRow}>
+            {onDecision && (
+              <Button variant="contained" color="primary" onClick={() => onDecision(item.id)}>
+                Make decision
+              </Button>
+            )}
+            {onToggleComplete && (
+              <Button variant="outlined" color="secondary" onClick={() => onToggleComplete(item as Task)}>
+                Finished
+              </Button>
+            )}
+          </Box>
+        )}
       </CardContent>
       {/* Absolutely positioned Decision Result */}
       {hasDecision && decision && (
-        <Box sx={{ position: "absolute", bottom: 16, right: 16 }}>
+        <Box className={styles.decisionResultBottomRight}>
           <Typography variant="body1" color="primary" fontWeight="bold">
             Decision: {decision}
           </Typography>
