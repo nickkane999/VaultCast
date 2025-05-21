@@ -1,9 +1,24 @@
-export type Event = {
-  id: string | number;
+import { ObjectId } from "mongodb";
+
+export interface Decision {
+  id: string | number; // Using string to be consistent with MongoDB _id conversion
   name: string;
-  date: string;
-  type: "calendar" | "common_decision";
-};
+  type: "calendar" | "common_decision" | "task";
+}
+
+export interface Event extends Decision {
+  date: string; // YYYY-MM-DD format
+  startTime?: string; // Optional HH:mm format
+  endTime?: string; // Optional HH:mm format
+  attended?: boolean; // Add attended field
+}
+
+export interface CommonDecision extends Decision {}
+
+export interface Task extends Decision {
+  is_completed: boolean;
+  tags?: string[];
+}
 
 export type EventCardProps = {
   event: Event;
@@ -13,19 +28,5 @@ export type EventCardProps = {
   onDelete: () => void;
   onUpdate: (updatedEvent: Event) => void;
 };
-
-export interface CommonDecision {
-  id: string | number;
-  name: string;
-  type: "common_decision";
-}
-
-export interface Task {
-  id: string | number;
-  name: string;
-  type: "task";
-  is_completed: boolean;
-  tags?: string[];
-}
 
 export type Item = Event | CommonDecision | Task;

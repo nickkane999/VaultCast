@@ -84,3 +84,12 @@
   /* Removed justify-content: flex-start to rely on parent or default */
   align-items: center; /* Align items vertically in the row */
 }
+
+/* Styles for attendance status text */
+.cardContent .attendedSuccessText {
+  color: green; /* Or a hex code like #4CAF50 */
+}
+
+.cardContent .attendedErrorText {
+  color: red; /* Or a hex code like #F44336 */
+}

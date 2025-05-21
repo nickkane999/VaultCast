@@ -16,7 +16,7 @@ export default function MessengerProfileList({ profiles, onUpdateProfile, onDele
   return (
     <List>
       {profiles.map((profile) => (
-        <ListItem key={profile.id} disablePadding sx={{ mb: 2 }}>
+        <ListItem key={profile.id} sx={{ mb: 6, mt: 6 }}>
           <MessengerProfileCard profile={profile} onUpdate={onUpdateProfile} onDelete={onDeleteProfile} availableFiles={availableFiles} />
         </ListItem>
       ))}

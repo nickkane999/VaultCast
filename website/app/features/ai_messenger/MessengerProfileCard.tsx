@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Box, Typography, Card, CardContent, CardActions, Button, Chip, TextField, Stack, Autocomplete } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
 import { MessageProfile } from "./types";
 import styles from "./AiMessenger.module.css";
+import { useMessengerProfileState } from "./states/MessengerProfileState";
 
 interface MessengerProfileCardProps {
   profile: MessageProfile;
@@ -16,45 +17,11 @@ interface MessengerProfileCardProps {
 }
 
 export default function MessengerProfileCard({ profile, onUpdate, onDelete, availableFiles }: MessengerProfileCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(profile.name);
-  const [editedSystemPrompt, setEditedSystemPrompt] = useState(profile.systemPrompt);
-  const [editedFiles, setEditedFiles] = useState<string[]>(profile.files || []);
-
-  useEffect(() => {
-    setEditedName(profile.name);
-    setEditedSystemPrompt(profile.systemPrompt);
-    setEditedFiles(profile.files || []);
-  }, [profile]);
-
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleSaveClick = async () => {
-    if (editedName && editedSystemPrompt) {
-      await onUpdate(profile.id, {
-        name: editedName,
-        systemPrompt: editedSystemPrompt,
-        files: editedFiles,
-      });
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancelClick = () => {
-    setEditedName(profile.name);
-    setEditedSystemPrompt(profile.systemPrompt);
-    setEditedFiles(profile.files || []);
-    setIsEditing(false);
-  };
-
-  const handleDeleteClick = () => {
-    onDelete(profile.id);
-  };
+  const { isEditing, editedName, editedSystemPrompt, editedFiles, question, aiResponse, setIsEditing, setEditedName, setEditedSystemPrompt, setEditedFiles, setQuestion, setAiResponse, handleEditClick, handleSaveClick, handleCancelClick, handleDeleteClick, handleSendClick } =
+    useMessengerProfileState({ profile, onUpdate, onDelete });
 
   return (
-    <Card sx={{ width: "100%" }} className={styles.cardContainer}>
+    <Card sx={{ width: "100%", mt: 3 }} className={styles.cardContainer}>
       <Box className={styles.cardActionsTopRight}>
         {!isEditing && (
           <>
@@ -109,13 +76,14 @@ export default function MessengerProfileCard({ profile, onUpdate, onDelete, avai
               Files: {(profile.files || []).join(", ")}
             </Typography>
             <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1">Ask a Question (Placeholder):</Typography>
-              <TextField label="Your Question" fullWidth margin="normal" disabled />
-              <Button variant="outlined" sx={{ mt: 1 }} disabled>
+              <Typography variant="subtitle1">Ask a Question:</Typography>
+              <TextField label="Your Question" fullWidth margin="normal" value={question} onChange={(e) => setQuestion(e.target.value)} />
+              <Button variant="outlined" sx={{ mt: 1 }} onClick={handleSendClick} disabled={!question.trim()}>
                 Send
               </Button>
               <Box sx={{ mt: 2, border: "1px dashed grey", p: 2 }}>
-                <Typography variant="body2">AI Response Area</Typography>
+                <Typography variant="body2">AI Response:</Typography>
+                <Typography variant="body1">{aiResponse}</Typography>
               </Box>
             </Box>
           </Box>

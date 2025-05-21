@@ -3,11 +3,13 @@ import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
 
 function isValidRequest(body: any, id?: string | null) {
-  const { name, date, type, is_completed, tags } = body;
+  const { name, date, type, is_completed, tags, startTime, endTime, attended } = body;
   const notValidEntry = (id !== undefined && !id) || !name || !type || (type !== "calendar" && type !== "common_decision" && type !== "task");
   const noEventDate = type === "calendar" && !date;
   const noTaskCompletedStatus = type === "task" && typeof is_completed !== "boolean";
   const invalidTags = tags !== undefined && (!Array.isArray(tags) || !tags.every((tag) => typeof tag === "string"));
+  const invalidTimes = (startTime !== undefined && typeof startTime !== "string") || (endTime !== undefined && typeof endTime !== "string");
+  const invalidAttended = attended !== undefined && typeof attended !== "boolean";
 
   if (notValidEntry) {
     return { error: "ID (for PUT), name, and valid type ('calendar', 'common_decision', or 'task') are required" };
@@ -21,10 +23,17 @@ function isValidRequest(body: any, id?: string | null) {
   if (invalidTags) {
     return { error: "'tags' must be an array of strings if provided" };
   }
+  if (invalidTimes) {
+    return { error: "'startTime' and 'endTime' must be strings if provided" };
+  }
+  if (invalidAttended) {
+    return { error: "'attended' must be a boolean if provided" };
+  }
+
   return null; // Request is valid
 }
 
-async function updateEvent(id: string, updateData: { name?: string; type?: string; date?: string; is_completed?: boolean }) {
+async function updateEvent(id: string, updateData: { name?: string; type?: string; date?: string; is_completed?: boolean; tags?: string[]; startTime?: string; endTime?: string }) {
   const collection = await getCollection("events");
   const result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
   if (result.matchedCount === 0) {
@@ -44,6 +53,9 @@ export async function GET() {
     type: e.type,
     is_completed: e.is_completed,
     tags: e.tags,
+    startTime: e.startTime,
+    endTime: e.endTime,
+    attended: e.attended,
   }));
   return NextResponse.json(result);
 }
@@ -54,11 +66,17 @@ export async function POST(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, date, type, is_completed, tags } = body;
+  const { name, date, type, is_completed, tags, startTime, endTime, attended } = body;
   const doc: any = { name, type };
-  if (type === "calendar") doc.date = date;
+  if (type === "calendar") {
+    doc.date = date;
+    if (startTime !== undefined) doc.startTime = startTime;
+    if (endTime !== undefined) doc.endTime = endTime;
+  }
   if (type === "task") doc.is_completed = is_completed;
   if (tags !== undefined) doc.tags = tags;
+  if (attended !== undefined) doc.attended = attended;
+
   const collection = await getCollection("events");
   const res = await collection.insertOne(doc);
   return NextResponse.json({ id: res.insertedId.toString(), ...doc }, { status: 201 });
@@ -86,13 +104,18 @@ export async function PUT(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, date, type, is_completed, tags } = body;
-  const updateData: { name?: string; type?: string; date?: string; is_completed?: boolean; tags?: string[] } = {};
-  if (name) updateData.name = name;
-  if (type) updateData.type = type;
+  const { name, date, type, is_completed, tags, startTime, endTime, attended } = body;
+  const updateData: { name?: string; type?: string; date?: string; is_completed?: boolean; tags?: string[]; startTime?: string; endTime?: string; attended?: boolean } = {};
+  if (name !== undefined) updateData.name = name;
+  if (type !== undefined) updateData.type = type;
   if (type === "calendar" && date !== undefined) updateData.date = date;
   if (type === "task" && is_completed !== undefined) updateData.is_completed = is_completed;
-  if (type === "task" && tags !== undefined) updateData.tags = tags;
+  if (tags !== undefined) updateData.tags = tags;
+  if (type === "calendar") {
+    if (startTime !== undefined) updateData.startTime = startTime;
+    if (endTime !== undefined) updateData.endTime = endTime;
+  }
+  if (attended !== undefined) updateData.attended = attended;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields provided for update" }, { status: 400 });
@@ -102,5 +125,5 @@ export async function PUT(req: NextRequest) {
   if (!updatedEvent) {
     return NextResponse.json({ error: "Event not found or could not be updated" }, { status: 404 });
   }
-  return NextResponse.json({ id: updatedEvent._id.toString(), name: updatedEvent.name, date: updatedEvent.date, type: updatedEvent.type, is_completed: updatedEvent.is_completed }, { status: 200 });
+  return NextResponse.json({ id: updatedEvent._id.toString(), name: updatedEvent.name, date: updatedEvent.date, type: updatedEvent.type, is_completed: updatedEvent.is_completed, startTime: updatedEvent.startTime, endTime: updatedEvent.endTime }, { status: 200 });
 }

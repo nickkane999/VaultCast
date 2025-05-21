@@ -1,202 +1,57 @@
 "use client";
-import { useState, useEffect } from "react";
+import React from "react";
 import CardComponent from "./CardComponent";
 import { Task, Event, CommonDecision } from "./types";
 import { Button, TextField, Box, CircularProgress, Checkbox, FormControlLabel, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 import Autocomplete from "@mui/material/Autocomplete";
 import Chip from "@mui/material/Chip";
-
-interface TaskFormState {
-  name: string;
-  is_completed: boolean;
-  tags: string[];
-}
+import { useTaskListClientState } from "./states/TaskListClientState";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 export default function TaskListClient({ initialTasks = [] }: { initialTasks: Task[] }) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [showForm, setShowForm] = useState(false);
-  const [newTask, setNewTask] = useState<TaskFormState>({ name: "", is_completed: false, tags: [] });
-  const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [editedTask, setEditedTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [taskDecisions, setTaskDecisions] = useState<Record<string, number>>({});
+  const {
+    tasks,
+    showForm,
+    newTask,
+    editingId,
+    editedTask,
+    loading,
+    taskDecisions,
+    tagFilter,
+    statusFilter,
+    availableTags,
+    editedTaskTags,
+    addTagInputValue,
+    newTagInput,
+    handleAddTaskCard,
+    handleFormChange,
+    handleEditFormChange,
+    handleFormSubmit,
+    handleEditFormSubmit,
+    handleDelete,
+    handleEdit,
+    handleToggleComplete,
+    handleDecision,
+    displayedTasks,
+    handleAddTag,
+    handleTagChange,
+    setShowForm,
+    setNewTask,
+    setEditingId,
+    setEditedTask,
+    setTagFilter,
+    setStatusFilter,
+    setEditedTaskTags,
+    setAddTagInputValue,
+    setNewTagInput,
+    notification,
+    setNotification,
+  } = useTaskListClientState({ initialTasks });
 
-  const [tagFilter, setTagFilter] = useState<string>("All");
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [editedTaskTags, setEditedTaskTags] = useState<string[]>([]);
-  const [addTagInputValue, setAddTagInputValue] = useState<string>("");
-  const [newTagInput, setNewTagInput] = useState<string>("");
-
-  // Note: Tasks will use the same handleDecision as other types if needed,
-  // but the primary task-specific action is marking as completed.
-
-  const handleAddTaskCard = () => {
-    // Reset newEvent state with default date and empty tags array
-    setNewTask({ name: "", is_completed: false, tags: [] });
-    setAddTagInputValue("");
-    setNewTagInput("");
-    setShowForm(true);
-  };
-
-  // Function to collect unique tags from tasks
-  const collectUniqueTags = (currentTasks: Task[]) => {
-    const tags = new Set<string>();
-    currentTasks.forEach((task) => {
-      if (task.tags) {
-        task.tags.forEach((tag) => tags.add(tag));
-      }
-    });
-    setAvailableTags(Array.from(tags));
-  };
-
-  // Initial collection of tags and update on tasks change
-  useEffect(() => {
-    collectUniqueTags(tasks);
-  }, [tasks]);
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    // Do not handle tags here, Autocomplete handles it directly
-    if (name !== "tags") {
-      setNewTask({ ...newTask, [name]: type === "checkbox" ? checked : value });
-    }
-  };
-
-  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    if (editedTask && name !== "tags") {
-      setEditedTask({ ...editedTask, [name]: type === "checkbox" ? checked : value } as Task);
-    }
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.name) return;
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newTask.name,
-          type: "task",
-          is_completed: newTask.is_completed,
-          tags: newTask.tags,
-        }),
-      });
-      if (response.ok) {
-        const addedTask = await response.json();
-        setTasks((prev) => [...prev, addedTask]);
-        setNewTask({ name: "", is_completed: false, tags: [] });
-        setShowForm(false);
-      } else {
-        console.error("Failed to add task:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error adding task:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleEditFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editedTask || !editedTask.name) return;
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/events?id=${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editedTask.name,
-          type: "task",
-          is_completed: editedTask.is_completed,
-          tags: editedTaskTags,
-        }),
-      });
-      if (response.ok) {
-        const updatedTask = await response.json();
-        setTasks((prev) => prev.map((task) => (task.id === editingId ? updatedTask : task)));
-        setEditingId(null);
-        setEditedTask(null);
-      } else {
-        console.error("Failed to update task:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (id: string | number) => {
-    try {
-      const response = await fetch(`/api/events?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setTasks((prev) => prev.filter((task) => task.id !== id));
-      } else {
-        console.error("Failed to delete task:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
-  };
-
-  const handleEdit = (item: Event | CommonDecision | Task) => {
-    // Ensure we only process Task items here
-    if (item.type === "task") {
-      setEditingId(item.id);
-      setEditedTask(item as Task);
-      setEditedTaskTags((item as Task).tags || []);
-    } else {
-      console.error("Attempted to edit a non-task item in TaskListClient");
-    }
-  };
-
-  const handleToggleComplete = async (item: Task) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/events?id=${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_completed: !item.is_completed, type: "task", name: item.name }),
-      });
-      if (response.ok) {
-        const updatedTask = await response.json();
-        setTasks((prev) => prev.map((task) => (task.id === item.id ? updatedTask : task)));
-      } else {
-        console.error("Failed to update task completion status:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error updating task completion status:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleDecision = (id: string | number) => {
-    const randomNum = Math.floor(Math.random() * 100) + 1;
-    setTaskDecisions((prev) => ({ ...prev, [id]: randomNum }));
-  };
-
-  const getFilteredAndSortedTasks = () => {
-    const filtered = tasks.filter((task) => {
-      if (tagFilter === "All") return true;
-      if (!task.tags) return false;
-      return task.tags.includes(tagFilter);
-    });
-    // No sorting implemented yet for tasks, just return filtered
-    return filtered;
-  };
-
-  const displayedTasks = getFilteredAndSortedTasks();
-
-  const handleAddTag = () => {
-    if (!newTagInput.trim()) return;
-    setNewTask({ ...newTask, tags: [...newTask.tags, newTagInput.trim()] });
-    setNewTagInput("");
-    setAddTagInputValue("");
+  const handleCloseNotification = () => {
+    setNotification(null);
   };
 
   return (
@@ -211,6 +66,14 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
                 {tag}
               </MenuItem>
             ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="status-filter-label">Status</InputLabel>
+          <Select labelId="status-filter-label" id="status-filter" value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value as "All" | "Completed" | "Not Completed")}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="Not Completed">Not Completed</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -282,8 +145,6 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
         </Box>
       )}
       <Box className={styles.cardsColumnContainer}>
-        {" "}
-        {/* Tasks will likely be in a column layout */}
         {displayedTasks.map((task: Task) =>
           editingId === task.id ? (
             <Box component="form" onSubmit={handleEditFormSubmit} key={task.id} className={styles.formBox}>
@@ -321,6 +182,13 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
           )
         )}
       </Box>
+      {notification && (
+        <Snackbar open={true} autoHideDuration={6000} onClose={handleCloseNotification}>
+          <Alert onClose={handleCloseNotification} severity={notification.type || undefined} sx={{ width: "100%" }}>
+            {notification.message}
+          </Alert>
+        </Snackbar>
+      )}
     </Box>
   );
 }

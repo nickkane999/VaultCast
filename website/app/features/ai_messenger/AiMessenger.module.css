@@ -1,22 +1,16 @@
-/* Styles for positioning icons in the top right of the card */
 .cardContainer {
   position: relative;
 }
 
 .cardActionsTopRight {
   position: absolute;
-  top: 8px; /* Adjust as needed */
-  right: 8px; /* Adjust as needed */
-  z-index: 1; /* Ensure icons are above card content */
-}
-
-/* Add other AI Messenger specific styles here as needed */
-.formPaper {
-  /* Example: padding and shadow, already handled by MUI Paper elevation and sx */
+  top: 8px;
+  right: 8px;
+  z-index: 1;
 }
 
 .formButtonsBox {
   display: flex;
-  gap: 8px; /* Matches MUI spacing(1) */
-  margin-top: 16px; /* Matches MUI spacing(2) */
+  gap: 8px;
+  margin-top: 16px;
 }
