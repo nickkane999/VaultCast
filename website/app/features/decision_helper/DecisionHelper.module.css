@@ -93,3 +93,8 @@
 .cardContent .attendedErrorText {
   color: red; /* Or a hex code like #F44336 */
 }
+
+.cardContent .descriptionTextField {
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Task, Event, CommonDecision } from "../types";
+import { Task, Event, CommonDecision, Project } from "../types";
 import React from "react";
 
 interface TaskFormState {
   name: string;
   is_completed: boolean;
   tags: string[];
+  projectId?: string;
 }
 
 interface UseTaskListClientStateProps {
@@ -14,8 +15,9 @@ interface UseTaskListClientStateProps {
 
 export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientStateProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [newTask, setNewTask] = useState<TaskFormState>({ name: "", is_completed: false, tags: [] });
+  const [newTask, setNewTask] = useState<TaskFormState>({ name: "", is_completed: false, tags: [], projectId: undefined });
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,9 +30,29 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
   const [addTagInputValue, setAddTagInputValue] = useState<string>("");
   const [newTagInput, setNewTagInput] = useState<string>("");
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | null } | null>(null);
+  const [projectFilter, setProjectFilter] = useState<string | "All">("All");
+
+  // Fetch projects when component mounts
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/decision_helper/projects");
+        if (response.ok) {
+          const projectsData = await response.json();
+          setProjects(projectsData);
+        } else {
+          console.error("Failed to fetch projects:", await response.json());
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const handleAddTaskCard = () => {
-    setNewTask({ name: "", is_completed: false, tags: [] });
+    setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined });
     setAddTagInputValue("");
     setNewTagInput("");
     setShowForm(true);
@@ -57,6 +79,16 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     }
   };
 
+  const handleProjectChange = (projectId: string | undefined) => {
+    setNewTask({ ...newTask, projectId });
+  };
+
+  const handleEditProjectChange = (projectId: string | undefined) => {
+    if (editedTask) {
+      setEditedTask({ ...editedTask, projectId } as Task);
+    }
+  };
+
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     if (editedTask && name !== "tags") {
@@ -70,7 +102,7 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     setLoading(true);
 
     try {
-      const response = await fetch("/api/events", {
+      const response = await fetch("/api/decision_helper/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -78,12 +110,13 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
           type: "task",
           is_completed: newTask.is_completed,
           tags: newTask.tags,
+          projectId: newTask.projectId,
         }),
       });
       if (response.ok) {
         const addedTask = await response.json();
         setTasks((prev) => [...prev, addedTask]);
-        setNewTask({ name: "", is_completed: false, tags: [] });
+        setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined });
         setShowForm(false);
       } else {
         console.error("Failed to add task:", await response.json());
@@ -99,7 +132,7 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     if (!editedTask || !editedTask.name) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/events?id=${editingId}`, {
+      const response = await fetch(`/api/decision_helper/tasks?id=${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,6 +140,7 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
           type: "task",
           is_completed: editedTask.is_completed,
           tags: editedTaskTags,
+          projectId: editedTask.projectId,
         }),
       });
       if (response.ok) {
@@ -114,21 +148,21 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
         setTasks((prev) => prev.map((task) => (task.id === editingId ? updatedTask : task)));
         setEditingId(null);
         setEditedTask(null);
-        setNotification({ message: `Task "${updatedTask.name}" marked as ${updatedTask.is_completed ? "completed" : "not completed"}.`, type: "success" });
+        setNotification({ message: `Task "${updatedTask.name}" updated successfully.`, type: "success" });
       } else {
         console.error("Failed to update task:", await response.json());
-        setNotification({ message: "Failed to update task completion status.", type: "error" });
+        setNotification({ message: "Failed to update task.", type: "error" });
       }
     } catch (error) {
       console.error("Error updating task:", error);
-      setNotification({ message: "An error occurred while updating task completion status.", type: "error" });
+      setNotification({ message: "An error occurred while updating task.", type: "error" });
     }
     setLoading(false);
   };
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/events?id=${id}`, {
+      const response = await fetch(`/api/decision_helper/tasks?id=${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -154,7 +188,7 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
   const handleToggleComplete = async (item: Task) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/events?id=${item.id}`, {
+      const response = await fetch(`/api/decision_helper/tasks?id=${item.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_completed: !item.is_completed, type: "task", name: item.name }),
@@ -188,13 +222,24 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
         if (statusFilter === "Completed" && !task.is_completed) {
           return false;
         }
-        if (statusFilter === "Not Completed" && task.is_completed) {
+        if (statusFilter !== "Completed" && task.is_completed) {
           return false;
         }
       }
-      if (tagFilter === "All") return true;
-      if (!task.tags) return false;
-      return task.tags.includes(tagFilter);
+      if (tagFilter !== "All") {
+        if (!task.tags) return false;
+        if (!task.tags.includes(tagFilter)) return false;
+      }
+      if (projectFilter !== "All") {
+        if (projectFilter === "no-project" && task.projectId) {
+          return false;
+        }
+        if (projectFilter !== "no-project" && task.projectId !== projectFilter) {
+          return false;
+        }
+      }
+
+      return true; // Keep the task if it passes all filters
     });
     return filtered;
   };
@@ -212,8 +257,13 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     // Do not handle tags here, Autocomplete handles it directly
   };
 
+  const handleProjectFilterChange = (projectId: string | "All") => {
+    setProjectFilter(projectId);
+  };
+
   return {
     tasks,
+    projects,
     showForm,
     newTask,
     editingId,
@@ -227,9 +277,11 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     addTagInputValue,
     newTagInput,
     notification,
+    projectFilter,
     handleAddTaskCard,
-    collectUniqueTags,
     handleFormChange,
+    handleProjectChange,
+    handleEditProjectChange,
     handleEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
@@ -241,6 +293,7 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     displayedTasks,
     handleAddTag,
     handleTagChange,
+    handleProjectFilterChange,
     setShowForm,
     setNewTask,
     setEditingId,

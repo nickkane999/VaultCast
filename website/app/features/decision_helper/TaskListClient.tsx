@@ -13,6 +13,7 @@ import Alert from "@mui/material/Alert";
 export default function TaskListClient({ initialTasks = [] }: { initialTasks: Task[] }) {
   const {
     tasks,
+    projects,
     showForm,
     newTask,
     editingId,
@@ -25,8 +26,12 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
     editedTaskTags,
     addTagInputValue,
     newTagInput,
+    notification,
+    projectFilter,
     handleAddTaskCard,
     handleFormChange,
+    handleProjectChange,
+    handleEditProjectChange,
     handleEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
@@ -37,6 +42,7 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
     displayedTasks,
     handleAddTag,
     handleTagChange,
+    handleProjectFilterChange,
     setShowForm,
     setNewTask,
     setEditingId,
@@ -46,7 +52,6 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
     setEditedTaskTags,
     setAddTagInputValue,
     setNewTagInput,
-    notification,
     setNotification,
   } = useTaskListClientState({ initialTasks });
 
@@ -76,6 +81,19 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
             <MenuItem value="Not Completed">Not Completed</MenuItem>
           </Select>
         </FormControl>
+
+        {/* Project Filter Dropdown */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="project-filter-label">Project</InputLabel>
+          <Select labelId="project-filter-label" id="project-filter" value={projectFilter} label="Project" onChange={(e) => handleProjectFilterChange(e.target.value === "" ? "All" : (e.target.value as string))}>
+            <MenuItem value="All">All</MenuItem>
+            {projects.map((project) => (
+              <MenuItem key={project.id} value={project.id}>
+                {project.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
       <Button variant="contained" color="primary" onClick={handleAddTaskCard} sx={{ mb: 2 }}>
         Add Task
@@ -84,6 +102,22 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
         <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
           <TextField name="name" label="Task name" value={newTask.name} onChange={handleFormChange} fullWidth margin="normal" required />
           <FormControlLabel control={<Checkbox name="is_completed" checked={newTask.is_completed} onChange={handleFormChange} />} label="Completed" />
+
+          {/* Project Selection Dropdown */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="project-select-label">Associated Project (Optional)</InputLabel>
+            <Select labelId="project-select-label" id="project-select" value={newTask.projectId || ""} label="Associated Project (Optional)" onChange={(e) => handleProjectChange(e.target.value === "" ? undefined : (e.target.value as string))}>
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {projects.map((project) => (
+                <MenuItem key={project.id} value={project.id}>
+                  {project.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Autocomplete
             id="add-tags-autocomplete"
             options={availableTags}
@@ -150,6 +184,22 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
             <Box component="form" onSubmit={handleEditFormSubmit} key={task.id} className={styles.formBox}>
               <TextField name="name" label="Edit Task name" value={editedTask?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
               <FormControlLabel control={<Checkbox name="is_completed" checked={editedTask?.is_completed || false} onChange={handleEditFormChange} />} label="Completed" />
+
+              {/* Project Selection Dropdown for Edit Form */}
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="edit-project-select-label">Associated Project (Optional)</InputLabel>
+                <Select labelId="edit-project-select-label" id="edit-project-select" value={editedTask?.projectId || ""} label="Associated Project (Optional)" onChange={(e) => handleEditProjectChange(e.target.value === "" ? undefined : (e.target.value as string))}>
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {projects.map((project) => (
+                    <MenuItem key={project.id} value={project.id}>
+                      {project.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <Autocomplete
                 multiple
                 id="edit-tags-autocomplete"

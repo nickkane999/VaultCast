@@ -29,7 +29,7 @@ export function useCommonDecisionListState({ initialDecisions }: UseCommonDecisi
     if (!newDecision.name) return;
     setLoading(true);
     try {
-      const response = await fetch("/api/events", {
+      const response = await fetch("/api/decision_helper/decisions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newDecision.name, type: "common_decision" }),
@@ -56,7 +56,7 @@ export function useCommonDecisionListState({ initialDecisions }: UseCommonDecisi
     if (!editedDecision.name) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/events?id=${editingId}`, {
+      const response = await fetch(`/api/decision_helper/decisions?id=${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editedDecision.name, type: "common_decision" }),
@@ -80,7 +80,7 @@ export function useCommonDecisionListState({ initialDecisions }: UseCommonDecisi
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/events?id=${id}`, {
+      const response = await fetch(`/api/decision_helper/decisions?id=${id}`, {
         method: "DELETE",
       });
       if (response.ok) {

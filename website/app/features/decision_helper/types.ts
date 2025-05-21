@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 export interface Decision {
   id: string | number; // Using string to be consistent with MongoDB _id conversion
   name: string;
-  type: "calendar" | "common_decision" | "task";
+  type: "calendar" | "common_decision" | "task" | "project";
 }
 
 export interface Event extends Decision {
@@ -18,6 +18,12 @@ export interface CommonDecision extends Decision {}
 export interface Task extends Decision {
   is_completed: boolean;
   tags?: string[];
+  projectId?: string; // Reference to a Project
+}
+
+export interface Project extends Decision {
+  description: string;
+  dueDate: string; // YYYY-MM-DD format
 }
 
 export type EventCardProps = {
@@ -29,4 +35,4 @@ export type EventCardProps = {
   onUpdate: (updatedEvent: Event) => void;
 };
 
-export type Item = Event | CommonDecision | Task;
+export type Item = Event | CommonDecision | Task | Project;

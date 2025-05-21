@@ -25,7 +25,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/events?id=${id}`, {
+      const response = await fetch(`/api/decision_helper/events?id=${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -69,7 +69,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     if (!editedEvent) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/events?id=${editedEvent.id}`, {
+      const res = await fetch(`/api/decision_helper/events?id=${editedEvent.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -108,7 +108,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/events", {
+      const res = await fetch("/api/decision_helper/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

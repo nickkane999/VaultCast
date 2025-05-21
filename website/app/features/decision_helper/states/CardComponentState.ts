@@ -1,12 +1,13 @@
-import { Event, CommonDecision, Task } from "../types";
+import { Event, CommonDecision, Task, Project } from "../types";
 
 export interface CardComponentProps {
-  item: Event | CommonDecision | Task;
+  item: Event | CommonDecision | Task | Project;
   onDecision?: (id: string | number) => void;
-  onEdit: (item: Event | CommonDecision | Task) => void;
+  onEdit: (item: Event | CommonDecision | Task | Project) => void;
   onDelete: (id: string | number) => void;
   decision?: number;
   onToggleComplete?: (item: Task) => void;
+  className?: string;
 }
 
 export const formatDate = (dateString?: string) => {
