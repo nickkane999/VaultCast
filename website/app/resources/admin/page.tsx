@@ -2,19 +2,13 @@
 
 import React from "react";
 import { Container, Box, Typography } from "@mui/material";
-import EmailForm from "../../features/ai_emailer/EmailForm";
-import { useAIEmailerPageState } from "../../features/ai_emailer/states/AIEmailerPageState";
 
 export default function AiEmailerPage() {
-  const pageState = useAIEmailerPageState();
-
   return (
     <Container sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        AI Email Generator
+        Resources
       </Typography>
-
-      <EmailForm {...pageState} />
     </Container>
   );
 }

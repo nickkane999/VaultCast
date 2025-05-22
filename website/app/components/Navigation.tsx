@@ -23,20 +23,10 @@ export default function Navigation() {
             Files
           </Link>
         </li>
-        <li className={styles.dropdown}>
-          <span className={styles.dropdownToggle}>Resources</span>
-          <ul className={styles.dropdownContent}>
-            <li>
-              <Link href="/resources/decision_helper" className={pathname === "/resources/decision_helper" ? "active" : ""}>
-                Decision Helper
-              </Link>
-            </li>
-            <li>
-              <Link href="/resources/ai_messenger" className={pathname === "/resources/ai_messenger" ? "active" : ""}>
-                AI Messenger
-              </Link>
-            </li>
-          </ul>
+        <li>
+          <Link href="/resources" className={pathname.startsWith("/resources") ? "active" : ""}>
+            Resources
+          </Link>
         </li>
       </ul>
     </nav>
