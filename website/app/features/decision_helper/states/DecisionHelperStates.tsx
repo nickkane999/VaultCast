@@ -20,9 +20,9 @@ export function useDecisionHelperState() {
         const tasksData = tasksRes.ok ? await tasksRes.json() : [];
         const projectsData = projectsRes.ok ? await projectsRes.json() : [];
 
-        setCalendarEvents(eventsData.filter((item: any) => item.type === "calendar"));
+        setCalendarEvents(eventsData);
         setCommonDecisions(decisionsData.map((item: any) => ({ id: item.id, name: item.name, type: "common_decision" })));
-        setTasks(tasksData.filter((item: any) => item.type === "task"));
+        setTasks(tasksData.filter((item: any) => ({ ...item, type: "task" })));
         setProjects(projectsData.map((item: any) => ({ ...item, type: "project" })));
       } catch (error) {
         console.error("API fetch failed:", error);

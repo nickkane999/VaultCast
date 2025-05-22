@@ -11,7 +11,6 @@ import { useDecisionHelperState } from "../../features/decision_helper/states/De
 
 export default function Page() {
   const { calendarEvents, commonDecisions, tasks, projects, loading, tabValue, handleTabChange } = useDecisionHelperState();
-
   return (
     <div className={styles.page}>
       <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
@@ -26,7 +25,7 @@ export default function Page() {
       <Box sx={{ mt: 2, mx: "auto" }} width="100%">
         {tabValue === 0 && (loading ? <CircularProgress /> : <EventListClient initialEvents={calendarEvents} />)}
         {tabValue === 1 && (loading ? <CircularProgress /> : <CommonDecisionList initialDecisions={commonDecisions} />)}
-        {tabValue === 2 && (loading ? <CircularProgress /> : <TaskListClient initialTasks={tasks} />)}
+        {tabValue === 2 && (loading ? <CircularProgress /> : <TaskListClient initialTasks={tasks} initialProjects={projects} />)}
         {tabValue === 3 && (loading ? <CircularProgress /> : <ProjectListClient initialProjects={projects} />)}
       </Box>
     </div>

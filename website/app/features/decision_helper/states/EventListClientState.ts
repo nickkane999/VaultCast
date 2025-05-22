@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Event, CommonDecision, Task } from "../types";
+import { deleteEvent, updateEvent, addEvent } from "../queries/event_queries";
+import { getFilteredAndSortedEvents } from "../util/event_filter";
 
 interface UseEventListClientStateProps {
   initialEvents: Event[];
@@ -9,7 +11,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [decisions, setDecisions] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
-  const [newEvent, setNewEvent] = useState<{ name: string; date: string; startTime?: string; endTime?: string; type: string; attended?: boolean }>({ name: "", date: "", startTime: "", endTime: "", type: "calendar" });
+  const [newEvent, setNewEvent] = useState<{ name: string; date: string; startTime?: string; endTime?: string; attended?: boolean }>({ name: "", date: "", startTime: "", endTime: "", attended: false });
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editedEvent, setEditedEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,35 +27,24 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/decision_helper/events?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setEvents((prev) => prev.filter((event) => event.id !== id));
-      } else {
-        console.error("Failed to delete event:", await response.json());
-      }
+      await deleteEvent(id);
+      setEvents((prev) => prev.filter((event) => event.id !== id));
     } catch (error) {
       console.error("Error deleting event:", error);
     }
   };
 
   const handleEdit = (item: Event | CommonDecision | Task) => {
-    if (item.type === "calendar") {
-      setEditingId(item.id);
-      const eventToEdit: Event = {
-        id: item.id,
-        name: item.name,
-        type: (item as Event).type,
-        date: (item as Event).date,
-        startTime: (item as Event).startTime,
-        endTime: (item as Event).endTime,
-        attended: (item as Event).attended ?? false,
-      };
-      setEditedEvent(eventToEdit);
-    } else {
-      console.warn(`Edit called for non-event type: ${item.type}`);
-    }
+    setEditingId(item.id);
+    const eventToEdit: Event = {
+      id: item.id,
+      name: item.name,
+      date: (item as Event).date,
+      startTime: (item as Event).startTime,
+      endTime: (item as Event).endTime,
+      attended: (item as Event).attended ?? false,
+    };
+    setEditedEvent(eventToEdit);
   };
 
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -69,14 +60,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     if (!editedEvent) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/decision_helper/events?id=${editedEvent.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...editedEvent, type: "calendar" }),
-      });
-      const updatedEvent = await res.json();
+      const updatedEvent = await updateEvent(editedEvent);
       setEvents((prev) => prev.map((event) => (event.id === editedEvent.id ? updatedEvent : event)));
       setEditingId(null);
       setEditedEvent(null);
@@ -91,13 +75,13 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
     const day = String(today.getDate()).padStart(2, "0");
-    setNewEvent({ name: "", date: `${year}-${month}-${day}`, startTime: "", endTime: "", type: "calendar" });
+    setNewEvent({ name: "", date: `${year}-${month}-${day}`, startTime: "", endTime: "", attended: false });
     setShowForm(true);
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setNewEvent({ ...newEvent, [name]: value, type: "calendar" });
+    setNewEvent({ ...newEvent, [name]: value });
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -108,16 +92,9 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/decision_helper/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...newEvent, type: "calendar", attended: newEvent.attended ?? false }),
-      });
-      const addedEvent = await res.json();
+      const addedEvent = await addEvent(newEvent);
       setEvents((prev) => [...prev, addedEvent]);
-      setNewEvent({ name: "", date: "", type: "calendar", startTime: "", endTime: "" });
+      setNewEvent({ name: "", date: "", startTime: "", endTime: "", attended: false });
       setShowForm(false);
     } catch (error) {
       console.error("Error adding event:", error);
@@ -125,57 +102,7 @@ export function useEventListClientState({ initialEvents }: UseEventListClientSta
     }
   };
 
-  const getFilteredAndSortedEvents = () => {
-    const now = new Date();
-    const todayLocalMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    const filtered = events.filter((event) => {
-      if (event.type !== "calendar") return false;
-      const [year, month, day] = (event as Event).date.split("-").map(Number);
-      const eventDateLocalMidnight = new Date(year, month - 1, day);
-
-      if (hidePastDates) {
-        if (eventDateLocalMidnight.getTime() < todayLocalMidnight.getTime()) {
-          return false;
-        }
-      }
-
-      switch (dateFilter) {
-        case "All":
-          return true;
-        case "Current Year":
-          return eventDateLocalMidnight.getFullYear() === now.getFullYear();
-        case "Current Month":
-          return eventDateLocalMidnight.getFullYear() === now.getFullYear() && eventDateLocalMidnight.getMonth() === now.getMonth();
-        case "Current Week":
-          const startOfWeek = new Date(todayLocalMidnight);
-          startOfWeek.setDate(todayLocalMidnight.getDate() - todayLocalMidnight.getDay());
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-          return eventDateLocalMidnight.getTime() >= startOfWeek.getTime() && eventDateLocalMidnight.getTime() <= endOfWeek.getTime();
-        case "Today":
-          return eventDateLocalMidnight.getTime() === todayLocalMidnight.getTime();
-        default:
-          return true;
-      }
-    });
-
-    const sorted = [...filtered].sort((a, b) => {
-      const dateA = new Date((a as Event).date);
-      const dateB = new Date((b as Event).date);
-
-      if (sortOrder === "Ascending") {
-        return dateA.getTime() - dateB.getTime();
-      } else {
-        return dateB.getTime() - dateA.getTime();
-      }
-    });
-
-    return sorted;
-  };
-
-  const displayedEvents = getFilteredAndSortedEvents();
+  const displayedEvents = getFilteredAndSortedEvents(events, dateFilter, sortOrder, hidePastDates);
 
   return {
     events,

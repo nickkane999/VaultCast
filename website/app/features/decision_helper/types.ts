@@ -3,7 +3,6 @@ import { ObjectId } from "mongodb";
 export interface Decision {
   id: string | number; // Using string to be consistent with MongoDB _id conversion
   name: string;
-  type: "calendar" | "common_decision" | "task" | "project";
 }
 
 export interface Event extends Decision {

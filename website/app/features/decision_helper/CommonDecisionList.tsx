@@ -45,7 +45,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
               </Box>
             </Box>
           ) : (
-            <CardComponent key={decision.id} item={decision} onEdit={() => handleEdit(decision.id, decision.name)} onDelete={handleDelete} onDecision={handleDecision} decision={commonDecisionResults[decision.id]} />
+            <CardComponent key={decision.id} item={decision} onEdit={() => handleEdit(decision.id, decision.name)} onDelete={handleDelete} onDecision={handleDecision} decision={commonDecisionResults[decision.id]} type="common_decision" />
           )
         )}
       </Box>

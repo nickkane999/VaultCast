@@ -1,54 +1,72 @@
 import { useState, useEffect } from "react";
 import { Task, Event, CommonDecision, Project } from "../types";
 import React from "react";
+import { addTask, updateTask, deleteTask } from "../queries/task_queries";
+// import { getFilteredAndSortedTasks } from "../util/task_filter"; // Remove or comment out incorrect import
 
 interface TaskFormState {
   name: string;
   is_completed: boolean;
   tags: string[];
-  projectId?: string;
+  projectId?: string | undefined;
 }
 
 interface UseTaskListClientStateProps {
-  initialTasks?: Task[];
+  initialTasks: Task[];
+  initialProjects: Project[];
 }
 
-export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientStateProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [projects, setProjects] = useState<Project[]>([]);
+export function useTaskListClientState({ initialTasks, initialProjects }: UseTaskListClientStateProps) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [showForm, setShowForm] = useState(false);
-  const [newTask, setNewTask] = useState<TaskFormState>({ name: "", is_completed: false, tags: [], projectId: undefined });
+  const [newTask, setNewTask] = useState<TaskFormState>({
+    name: "",
+    is_completed: false,
+    tags: [],
+    projectId: undefined,
+  });
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
+  const [editedTaskTags, setEditedTaskTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [taskDecisions, setTaskDecisions] = useState<Record<string, number>>({});
 
   const [tagFilter, setTagFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<"All" | "Completed" | "Not Completed">("Not Completed");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [editedTaskTags, setEditedTaskTags] = useState<string[]>([]);
   const [addTagInputValue, setAddTagInputValue] = useState<string>("");
   const [newTagInput, setNewTagInput] = useState<string>("");
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | null } | null>(null);
   const [projectFilter, setProjectFilter] = useState<string | "All">("All");
 
-  // Fetch projects when component mounts
+  // Fetch tasks and projects when component mounts
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/decision_helper/projects");
-        if (response.ok) {
-          const projectsData = await response.json();
+        // Fetch tasks
+        const tasksResponse = await fetch("/api/decision_helper/tasks");
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
+          setTasks(tasksData);
+        } else {
+          console.error("Failed to fetch tasks:", await tasksResponse.json());
+        }
+
+        // Fetch projects
+        const projectsResponse = await fetch("/api/decision_helper/projects");
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json();
           setProjects(projectsData);
         } else {
-          console.error("Failed to fetch projects:", await response.json());
+          console.error("Failed to fetch projects:", await projectsResponse.json());
         }
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchProjects();
+    fetchData();
   }, []);
 
   const handleAddTaskCard = () => {
@@ -102,27 +120,18 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     setLoading(true);
 
     try {
-      const response = await fetch("/api/decision_helper/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newTask.name,
-          type: "task",
-          is_completed: newTask.is_completed,
-          tags: newTask.tags,
-          projectId: newTask.projectId,
-        }),
+      const addedTask = await addTask({
+        name: newTask.name,
+        is_completed: newTask.is_completed,
+        tags: newTask.tags,
+        projectId: newTask.projectId,
       });
-      if (response.ok) {
-        const addedTask = await response.json();
-        setTasks((prev) => [...prev, addedTask]);
-        setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined });
-        setShowForm(false);
-      } else {
-        console.error("Failed to add task:", await response.json());
-      }
-    } catch (error) {
+      setTasks((prev) => [...prev, addedTask]);
+      setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined });
+      setShowForm(false);
+    } catch (error: any) {
       console.error("Error adding task:", error);
+      // Optionally show a user-friendly error message
     }
     setLoading(false);
   };
@@ -132,81 +141,52 @@ export function useTaskListClientState({ initialTasks = [] }: UseTaskListClientS
     if (!editedTask || !editedTask.name) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/decision_helper/tasks?id=${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editedTask.name,
-          type: "task",
-          is_completed: editedTask.is_completed,
-          tags: editedTaskTags,
-          projectId: editedTask.projectId,
-        }),
+      const updatedTask = await updateTask(editingId!, {
+        // Use non-null assertion as we check editingId is not null before this
+        name: editedTask.name,
+        is_completed: editedTask.is_completed,
+        tags: editedTaskTags,
+        projectId: editedTask.projectId,
       });
-      if (response.ok) {
-        const updatedTask = await response.json();
-        setTasks((prev) => prev.map((task) => (task.id === editingId ? updatedTask : task)));
-        setEditingId(null);
-        setEditedTask(null);
-        setNotification({ message: `Task "${updatedTask.name}" updated successfully.`, type: "success" });
-      } else {
-        console.error("Failed to update task:", await response.json());
-        setNotification({ message: "Failed to update task.", type: "error" });
-      }
-    } catch (error) {
+      setTasks((prev) => prev.map((task) => (task.id === editingId ? updatedTask : task)));
+      setEditingId(null);
+      setEditedTask(null);
+      setNotification({ message: `Task "${updatedTask.name}" updated successfully.`, type: "success" });
+    } catch (error: any) {
       console.error("Error updating task:", error);
-      setNotification({ message: "An error occurred while updating task.", type: "error" });
+      setNotification({ message: error.message || "Failed to update task.", type: "error" });
     }
     setLoading(false);
   };
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/decision_helper/tasks?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setTasks((prev) => prev.filter((task) => task.id !== id));
-      } else {
-        console.error("Failed to delete task:", await response.json());
-      }
-    } catch (error) {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    } catch (error: any) {
       console.error("Error deleting task:", error);
+      // Optionally show a user-friendly error message
     }
   };
 
   const handleEdit = (item: Event | CommonDecision | Task) => {
-    if (item.type === "task") {
-      setEditingId(item.id);
-      setEditedTask(item as Task);
-      setEditedTaskTags((item as Task).tags || []);
-    } else {
-      console.error("Attempted to edit a non-task item in TaskListClient");
-    }
+    setEditingId(item.id);
+    setEditedTask(item as Task);
+    setEditedTaskTags((item as Task).tags || []);
   };
 
   const handleToggleComplete = async (item: Task) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/decision_helper/tasks?id=${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_completed: !item.is_completed, type: "task", name: item.name }),
+      const updatedTask = await updateTask(item.id!, { name: item.name, is_completed: !item.is_completed }); // Use non-null assertion as item.id exists for existing tasks
+      setTasks((prev) => prev.map((task) => (task.id === item.id ? updatedTask : task)));
+      setNotification({
+        message: `Task "${updatedTask.name}" marked as ${updatedTask.is_completed ? "completed" : "not completed"}.`,
+        type: updatedTask.is_completed ? "success" : "error",
       });
-      if (response.ok) {
-        const updatedTask = await response.json();
-        setTasks((prev) => prev.map((task) => (task.id === item.id ? updatedTask : task)));
-        setNotification({
-          message: `Task "${updatedTask.name}" marked as ${updatedTask.is_completed ? "completed" : "not completed"}.`,
-          type: updatedTask.is_completed ? "success" : "error",
-        });
-      } else {
-        console.error("Failed to update task completion status:", await response.json());
-        setNotification({ message: "Failed to update task completion status.", type: "error" });
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating task completion status:", error);
-      setNotification({ message: "An error occurred while updating task completion status.", type: "error" });
+      setNotification({ message: error.message || "Failed to update task completion status.", type: "error" });
     }
     setLoading(false);
   };

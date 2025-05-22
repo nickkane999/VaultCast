@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Project } from "../types";
+import { addProject, updateProject, deleteProject } from "../queries/project_queries";
 
 interface UseProjectListStateProps {
   initialProjects: Project[];
@@ -8,23 +9,28 @@ interface UseProjectListStateProps {
 export function useProjectListState({ initialProjects }: UseProjectListStateProps) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [showForm, setShowForm] = useState(false);
-  const [newProject, setNewProject] = useState({ name: "", description: "", dueDate: "" });
+  const [newProject, setNewProject] = useState<Omit<Project, "id">>({ name: "", description: "", dueDate: "" });
   const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [editedProject, setEditedProject] = useState({ name: "", description: "", dueDate: "" });
+  const [editedProject, setEditedProject] = useState<Omit<Project, "id" | "type"> | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setProjects(initialProjects);
   }, [initialProjects]);
 
-  const handleAddCard = () => setShowForm(true);
+  const handleAddCard = () => {
+    setNewProject({ name: "", description: "", dueDate: "" });
+    setShowForm(true);
+  };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setNewProject({ ...newProject, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewProject({ ...newProject, [name]: value });
   };
 
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEditedProject({ ...editedProject, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEditedProject((prev) => (prev ? { ...prev, [name]: value } : null));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -32,63 +38,36 @@ export function useProjectListState({ initialProjects }: UseProjectListStateProp
     if (!newProject.name || !newProject.description || !newProject.dueDate) return;
     setLoading(true);
     try {
-      const response = await fetch("/api/decision_helper/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProject),
-      });
-      if (response.ok) {
-        const addedProject = await response.json();
-        setProjects((prev) => [...prev, addedProject]);
-        setNewProject({ name: "", description: "", dueDate: "" });
-        setShowForm(false);
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to add project:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+      const addedProject = await addProject(newProject);
+      setProjects((prev) => [...prev, addedProject]);
+      setNewProject({ name: "", description: "", dueDate: "" });
+      setShowForm(false);
+    } catch (error: any) {
       console.error("Error adding project:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
     setLoading(false);
   };
 
   const handleEditFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editedProject.name || !editedProject.description || !editedProject.dueDate || editingId === null) return;
+    if (!editedProject?.name || !editedProject.description || !editedProject.dueDate || editingId === null) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/decision_helper/projects?id=${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editedProject),
+      const updatedProject = await updateProject(editingId, editedProject);
+      // First clear the editing state
+      setEditingId(null);
+      setEditedProject(null);
+
+      // Then update the projects array
+      setProjects((prev) => {
+        const newState = prev.map((project) => (project.id === updatedProject.id ? { ...updatedProject } : project));
+        console.log("Projects state after update:", newState);
+        return newState;
       });
-      if (response.ok) {
-        const updatedProject = await response.json();
-
-        // First clear the editing state
-        setEditingId(null);
-        setEditedProject({ name: "", description: "", dueDate: "" });
-
-        // Then update the projects array
-        setProjects((prev) => {
-          const newState = prev.map((project) =>
-            project.id === updatedProject.id
-              ? { ...updatedProject, type: "project" } // Ensure type field is included
-              : project
-          );
-          console.log("Projects state after update:", newState);
-          return newState;
-        });
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to update project:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating project:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
     setLoading(false);
   };
@@ -96,19 +75,11 @@ export function useProjectListState({ initialProjects }: UseProjectListStateProp
   const handleDelete = async (id: string | number) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/decision_helper/projects?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setProjects((prev) => prev.filter((project) => project.id !== id));
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to delete project:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+      await deleteProject(id);
+      setProjects((prev) => prev.filter((project) => project.id !== id));
+    } catch (error: any) {
       console.error("Error deleting project:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
     setLoading(false);
   };

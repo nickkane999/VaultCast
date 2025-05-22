@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import CardComponent from "./CardComponent";
-import { Task, Event, CommonDecision } from "./types";
+import { Task, Event, CommonDecision, Project } from "./types";
 import { Button, TextField, Box, CircularProgress, Checkbox, FormControlLabel, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -10,7 +10,7 @@ import { useTaskListClientState } from "./states/TaskListClientState";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-export default function TaskListClient({ initialTasks = [] }: { initialTasks: Task[] }) {
+export default function TaskListClient({ initialTasks = [], initialProjects = [] }: { initialTasks: Task[]; initialProjects: Project[] }) {
   const {
     tasks,
     projects,
@@ -53,7 +53,7 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
     setAddTagInputValue,
     setNewTagInput,
     setNotification,
-  } = useTaskListClientState({ initialTasks });
+  } = useTaskListClientState({ initialTasks, initialProjects });
 
   const handleCloseNotification = () => {
     setNotification(null);
@@ -179,13 +179,12 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
         </Box>
       )}
       <Box className={styles.cardsColumnContainer}>
-        {displayedTasks.map((task: Task) =>
-          editingId === task.id ? (
+        {displayedTasks.map((task: Task) => {
+          return editingId === task.id ? (
             <Box component="form" onSubmit={handleEditFormSubmit} key={task.id} className={styles.formBox}>
               <TextField name="name" label="Edit Task name" value={editedTask?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
               <FormControlLabel control={<Checkbox name="is_completed" checked={editedTask?.is_completed || false} onChange={handleEditFormChange} />} label="Completed" />
 
-              {/* Project Selection Dropdown for Edit Form */}
               <FormControl fullWidth margin="normal">
                 <InputLabel id="edit-project-select-label">Associated Project (Optional)</InputLabel>
                 <Select labelId="edit-project-select-label" id="edit-project-select" value={editedTask?.projectId || ""} label="Associated Project (Optional)" onChange={(e) => handleEditProjectChange(e.target.value === "" ? undefined : (e.target.value as string))}>
@@ -228,9 +227,9 @@ export default function TaskListClient({ initialTasks = [] }: { initialTasks: Ta
               </Box>
             </Box>
           ) : (
-            <CardComponent key={task.id} item={task} onEdit={handleEdit} onDelete={handleDelete} onToggleComplete={handleToggleComplete} onDecision={handleDecision} decision={taskDecisions[task.id]} />
-          )
-        )}
+            <CardComponent key={task.id} item={task} onEdit={handleEdit} onDelete={handleDelete} onToggleComplete={handleToggleComplete} onDecision={handleDecision} decision={taskDecisions[task.id]} type="task" />
+          );
+        })}
       </Box>
       {notification && (
         <Snackbar open={true} autoHideDuration={6000} onClose={handleCloseNotification}>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CommonDecision } from "../types";
+import { addDecision, updateDecision, deleteDecision } from "../queries/decision_queries";
 
 interface UseCommonDecisionListStateProps {
   initialDecisions: CommonDecision[];
@@ -29,70 +30,40 @@ export function useCommonDecisionListState({ initialDecisions }: UseCommonDecisi
     if (!newDecision.name) return;
     setLoading(true);
     try {
-      const response = await fetch("/api/decision_helper/decisions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newDecision.name, type: "common_decision" }),
-      });
-      if (response.ok) {
-        const addedDecision = await response.json();
-        setDecisions((prev) => [...prev, { id: addedDecision.id, name: addedDecision.name, type: "common_decision" }]);
-        setNewDecision({ name: "" });
-        setShowForm(false);
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to add decision:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+      const addedDecision = await addDecision(newDecision.name);
+      setDecisions((prev) => [...prev, { id: addedDecision.id, name: addedDecision.name, type: "common_decision" }]);
+      setNewDecision({ name: "" });
+      setShowForm(false);
+    } catch (error: any) {
       console.error("Error adding decision:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
     setLoading(false);
   };
 
   const handleEditFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editedDecision.name) return;
+    if (!editedDecision.name || editingId === null) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/decision_helper/decisions?id=${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editedDecision.name, type: "common_decision" }),
-      });
-      if (response.ok) {
-        const updatedDecision = await response.json();
-        setDecisions((prev) => prev.map((decision) => (decision.id === editingId ? { ...decision, name: updatedDecision.name } : decision)));
-        setEditingId(null);
-        setEditedDecision({ name: "" });
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to update decision:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+      const updatedDecision = await updateDecision(editingId, editedDecision.name);
+      setDecisions((prev) => prev.map((decision) => (decision.id === editingId ? { ...decision, name: updatedDecision.name } : decision)));
+      setEditingId(null);
+      setEditedDecision({ name: "" });
+    } catch (error: any) {
       console.error("Error updating decision:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
     setLoading(false);
   };
 
   const handleDelete = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/decision_helper/decisions?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setDecisions((prev) => prev.filter((decision) => decision.id !== id));
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to delete decision:", errorData);
-        alert(`Error: ${errorData.error || "Unknown error"}`);
-      }
-    } catch (error) {
+      await deleteDecision(id);
+      setDecisions((prev) => prev.filter((decision) => decision.id !== id));
+    } catch (error: any) {
       console.error("Error deleting decision:", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(`Error: ${error.message || "Unknown error"}`);
     }
   };
 

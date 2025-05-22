@@ -107,7 +107,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
               </Box>
             </Box>
           ) : (
-            <CardComponent key={event.id} item={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={handleEdit} onDelete={handleDelete} />
+            <CardComponent key={event.id} item={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={handleEdit} onDelete={handleDelete} type="calendar" />
           )
         )}
       </Box>

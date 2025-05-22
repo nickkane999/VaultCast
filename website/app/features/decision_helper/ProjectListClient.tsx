@@ -38,9 +38,9 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
           projects.map((project: Project) =>
             editingId === project.id ? (
               <Box component="form" key={project.id} onSubmit={handleEditFormSubmit} className={styles.formBox}>
-                <TextField name="name" label="Edit Project Name" value={editedProject.name} onChange={handleEditFormChange} fullWidth margin="normal" required />
-                <TextField name="description" label="Edit Description" value={editedProject.description} onChange={handleEditFormChange} fullWidth margin="normal" required multiline rows={4} />
-                <TextField name="dueDate" label="Edit Due Date" type="date" value={editedProject.dueDate} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
+                <TextField name="name" label="Edit Project Name" value={editedProject?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
+                <TextField name="description" label="Edit Description" value={editedProject?.description || ""} onChange={handleEditFormChange} fullWidth margin="normal" required multiline rows={4} />
+                <TextField name="dueDate" label="Edit Due Date" type="date" value={editedProject?.dueDate || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
                 <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
                   <Button type="submit" variant="contained" color="primary" disabled={loading}>
                     {loading ? "Saving..." : "Update"}
@@ -51,7 +51,7 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
                 </Box>
               </Box>
             ) : (
-              <CardComponent key={`${project.id}-${project.dueDate}`} item={project} onEdit={() => handleEdit(project)} onDelete={handleDelete} className={styles.projectCardItem} />
+              <CardComponent key={`${project.id}-${project.dueDate}`} item={project} onEdit={() => handleEdit(project)} onDelete={handleDelete} className={styles.projectCardItem} type="project" />
             )
           )
         )}
