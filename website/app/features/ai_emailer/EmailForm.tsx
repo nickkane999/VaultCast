@@ -1,53 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typography, CircularProgress, Alert } from "@mui/material";
-import { useAIEmailerPageState } from "./states/AIEmailerPageState";
-import { Dispatch, SetStateAction } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import "@/store/aiEmailerSlice";
+import { useEditAiResponse, useEmailFormHandlers } from "./EmailFormHooks";
 
-interface EmailFormProps extends ReturnType<typeof useAIEmailerPageState> {
-  setAiResponse: Dispatch<SetStateAction<string>>;
-}
+export default function EmailForm() {
+  const { requestType, emailTitle, question, aiResponse, loading, error, action, updateRequest, sendToEmail } = useSelector((state: RootState) => state.aiEmailer);
+  const dispatch = useDispatch<AppDispatch>();
 
-export default function EmailForm({
-  requestType,
-  emailTitle,
-  question,
-  aiResponse,
-  loading,
-  error,
-  action,
-  updateRequest,
-  sendToEmail,
-  handleRequestTypeChange,
-  handleEmailTitleChange,
-  handleQuestionChange,
-  handleActionChange,
-  handleUpdateRequestChange,
-  handleSendToEmailChange,
-  handleSubmit,
-  handleSendEmail,
-  setAiResponse,
-}: EmailFormProps) {
-  const [isEditingResponse, setIsEditingResponse] = useState(false);
-  const [editableAiResponse, setEditableAiResponse] = useState("");
+  const { isEditingResponse, editableAiResponse, handleEditClick, handleSaveEdit, handleCancelEdit, setEditableAiResponse } = useEditAiResponse({ aiResponse });
 
-  useEffect(() => {
-    setEditableAiResponse(aiResponse);
-  }, [aiResponse]);
-
-  const handleEditClick = () => {
-    setIsEditingResponse(true);
-    setEditableAiResponse(aiResponse);
-  };
-
-  const handleSaveEdit = () => {
-    setAiResponse(editableAiResponse);
-    setIsEditingResponse(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditableAiResponse(aiResponse);
-    setIsEditingResponse(false);
-  };
+  const { handleRequestTypeChange, handleEmailTitleChange, handleQuestionChange, handleActionChange, handleUpdateRequestChange, handleSendToEmailChange, handleSubmit, handleSendEmail } = useEmailFormHandlers();
 
   return (
     <Box component="form" sx={{ mt: 3 }} noValidate autoComplete="off">

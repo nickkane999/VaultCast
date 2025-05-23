@@ -3,18 +3,19 @@
 import React from "react";
 import { Container, Box, Typography } from "@mui/material";
 import EmailForm from "../../features/ai_emailer/EmailForm";
-import { useAIEmailerPageState } from "../../features/ai_emailer/states/AIEmailerPageState";
+import { Provider } from "react-redux";
+import { store } from "@/store/store";
 
 export default function AiEmailerPage() {
-  const pageState = useAIEmailerPageState();
-
   return (
-    <Container sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        AI Email Generator
-      </Typography>
+    <Provider store={store}>
+      <Container sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          AI Email Generator
+        </Typography>
 
-      <EmailForm {...pageState} />
-    </Container>
+        <EmailForm />
+      </Container>
+    </Provider>
   );
 }
