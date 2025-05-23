@@ -72,14 +72,14 @@ export async function POST(request: Request) {
 
     let userPromptContent = "";
     if (action === "Draft") {
-      userPromptContent = prompt || `Generate an email with the following details:\nRequest Type: ${requestType}\nEmail Title: ${emailTitle}\nQuestion: ${question}\nAction: ${action}`;
+      userPromptContent = prompt || `Generate an email with the following details:\nRequest Type: ${requestType}\nQuestion: ${question}\nAction: ${action}`;
     } else if (action === "Update") {
       userPromptContent = prompt || `The user wants to update an existing email draft. \nOriginal Draft:\n${originalResponse}\n\nUser's Update Request: ${updateRequest}\n\nPlease provide the revised email draft based on the update request.`;
     }
 
     const openaiClient = new OpenAI({ apiKey: process.env.CHATGPT_API_KEY });
     const stream = await openaiClient.chat.completions.create({
-      model: model || "gpt-4o-mini",
+      model: model || "gpt-4.1-nano",
       messages: [
         { role: "system", content: systemPrompt || "You are an AI email assistant." },
         { role: "user", content: userPromptContent },

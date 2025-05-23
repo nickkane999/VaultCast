@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typography, CircularProgress, Alert } from "@mui/material";
 import { useAIEmailerPageState } from "./states/AIEmailerPageState";
+import { Dispatch, SetStateAction } from "react";
 
-interface EmailFormProps extends ReturnType<typeof useAIEmailerPageState> {}
+interface EmailFormProps extends ReturnType<typeof useAIEmailerPageState> {
+  setAiResponse: Dispatch<SetStateAction<string>>;
+}
 
 export default function EmailForm({
   requestType,
@@ -22,7 +25,30 @@ export default function EmailForm({
   handleSendToEmailChange,
   handleSubmit,
   handleSendEmail,
+  setAiResponse,
 }: EmailFormProps) {
+  const [isEditingResponse, setIsEditingResponse] = useState(false);
+  const [editableAiResponse, setEditableAiResponse] = useState("");
+
+  useEffect(() => {
+    setEditableAiResponse(aiResponse);
+  }, [aiResponse]);
+
+  const handleEditClick = () => {
+    setIsEditingResponse(true);
+    setEditableAiResponse(aiResponse);
+  };
+
+  const handleSaveEdit = () => {
+    setAiResponse(editableAiResponse);
+    setIsEditingResponse(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditableAiResponse(aiResponse);
+    setIsEditingResponse(false);
+  };
+
   return (
     <Box component="form" sx={{ mt: 3 }} noValidate autoComplete="off">
       <Typography variant="h6" gutterBottom>
@@ -87,7 +113,23 @@ export default function EmailForm({
           <Typography variant="h6" gutterBottom>
             Generated Email:
           </Typography>
-          <Box sx={{ p: 2, border: "1px solid #ccc", borderRadius: "4px", whiteSpace: "pre-wrap" }}>{aiResponse}</Box>
+          {isEditingResponse ? (
+            <>
+              <TextField fullWidth label="Edit Generated Email" value={editableAiResponse} onChange={(e) => setEditableAiResponse(e.target.value)} multiline rows={10} sx={{ mb: 2 }} />
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                <Button variant="outlined" onClick={handleCancelEdit} disabled={loading}>
+                  Cancel
+                </Button>
+                <Button variant="contained" onClick={handleSaveEdit} disabled={loading}>
+                  Save
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <Box sx={{ p: 2, border: "1px solid #ccc", borderRadius: "4px", whiteSpace: "pre-wrap", cursor: "pointer" }} onClick={handleEditClick}>
+              {aiResponse}
+            </Box>
+          )}
         </Box>
       )}
     </Box>

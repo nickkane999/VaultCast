@@ -142,5 +142,6 @@ export function useAIEmailerPageState() {
     handleSubmit,
     handleSendEmail,
     handleSendToEmailChange,
+    setAiResponse,
   };
 }
