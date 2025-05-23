@@ -1,16 +1,9 @@
 "use client";
 
 import React from "react";
-import { List, ListItem, Typography } from "@mui/material";
+import { List, ListItem } from "@mui/material";
 import MessengerProfileCard from "./MessengerProfileCard";
-import { MessageProfile } from "./types";
-
-interface MessengerProfileListProps {
-  profiles: MessageProfile[];
-  onUpdateProfile: (profileId: string, updatedData: { name: string; systemPrompt: string; files: string[] }) => Promise<void>;
-  onDeleteProfile: (profileId: string) => void;
-  availableFiles: string[];
-}
+import { MessageProfile, MessengerProfileListProps } from "./types";
 
 export default function MessengerProfileList({ profiles, onUpdateProfile, onDeleteProfile, availableFiles }: MessengerProfileListProps) {
   return (

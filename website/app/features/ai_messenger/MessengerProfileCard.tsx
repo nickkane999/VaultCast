@@ -5,30 +5,37 @@ import { Box, Typography, Card, CardContent, CardActions, Button, Chip, TextFiel
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
-import { MessageProfile } from "./types";
+import { MessengerProfileCardProps } from "./types";
 import styles from "./AiMessenger.module.css";
-import { useMessengerProfileState } from "./states/MessengerProfileState";
 
-interface MessengerProfileCardProps {
-  profile: MessageProfile;
-  onUpdate: (profileId: string, updatedData: { name: string; systemPrompt: string; files: string[] }) => Promise<void>;
-  onDelete: (profileId: string) => void;
-  availableFiles: string[];
-}
-
-export default function MessengerProfileCard({ profile, onUpdate, onDelete, availableFiles }: MessengerProfileCardProps) {
-  const { isEditing, editedName, editedSystemPrompt, editedFiles, question, aiResponse, setIsEditing, setEditedName, setEditedSystemPrompt, setEditedFiles, setQuestion, setAiResponse, handleEditClick, handleSaveClick, handleCancelClick, handleDeleteClick, handleSendClick } =
-    useMessengerProfileState({ profile, onUpdate, onDelete });
-
+export default function MessengerProfileCard({
+  profile,
+  onEditClick,
+  onDeleteClick,
+  onSendClick,
+  availableFiles,
+  isEditing,
+  editedName,
+  editedSystemPrompt,
+  editedFiles,
+  onNameChange,
+  onSystemPromptChange,
+  onFilesChange,
+  onSaveClick,
+  onCancelClick,
+  question,
+  onQuestionChange,
+  aiResponse,
+}: MessengerProfileCardProps) {
   return (
     <Card sx={{ width: "100%", mt: 3 }} className={styles.cardContainer}>
       <Box className={styles.cardActionsTopRight}>
         {!isEditing && (
           <>
-            <IconButton onClick={handleEditClick} aria-label="edit" size="small">
+            <IconButton onClick={onEditClick} aria-label="edit" size="small">
               <EditIcon />
             </IconButton>
-            <IconButton onClick={handleDeleteClick} aria-label="delete" size="small">
+            <IconButton onClick={onDeleteClick} aria-label="delete" size="small">
               <DeleteIcon />
             </IconButton>
           </>
@@ -38,10 +45,10 @@ export default function MessengerProfileCard({ profile, onUpdate, onDelete, avai
         {isEditing ? (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Edit Profile
+              Edit Profile: {profile.name}
             </Typography>
-            <TextField label="Profile Name" fullWidth margin="normal" value={editedName} onChange={(e) => setEditedName(e.target.value)} />
-            <TextField label="System Prompt" fullWidth margin="normal" multiline rows={4} value={editedSystemPrompt} onChange={(e) => setEditedSystemPrompt(e.target.value)} />
+            <TextField label="Profile Name" fullWidth margin="normal" value={editedName} onChange={(e) => onNameChange(e.target.value)} />
+            <TextField label="System Prompt" fullWidth margin="normal" multiline rows={4} value={editedSystemPrompt} onChange={(e) => onSystemPromptChange(e.target.value)} />
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1">Attached Files:</Typography>
               <Autocomplete
@@ -51,17 +58,17 @@ export default function MessengerProfileCard({ profile, onUpdate, onDelete, avai
                 getOptionLabel={(option) => option}
                 value={editedFiles}
                 onChange={(event, newValue) => {
-                  setEditedFiles(newValue);
+                  onFilesChange(newValue);
                 }}
                 renderInput={(params) => <TextField {...params} variant="outlined" label="Select Files" placeholder="Choose files" />}
                 renderTags={(value, getTagProps) => value.map((option, index) => <Chip variant="outlined" label={option} {...getTagProps({ index })} key={index} />)}
               />
             </Box>
             <Stack direction="row" spacing={2} sx={{ mt: 2 }} className={styles.formButtonsBox}>
-              <Button variant="contained" onClick={handleSaveClick}>
+              <Button variant="contained" onClick={onSaveClick}>
                 Save
               </Button>
-              <Button variant="outlined" onClick={handleCancelClick}>
+              <Button variant="outlined" onClick={onCancelClick}>
                 Cancel
               </Button>
             </Stack>
@@ -77,8 +84,8 @@ export default function MessengerProfileCard({ profile, onUpdate, onDelete, avai
             </Typography>
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1">Ask a Question:</Typography>
-              <TextField label="Your Question" fullWidth margin="normal" value={question} onChange={(e) => setQuestion(e.target.value)} />
-              <Button variant="outlined" sx={{ mt: 1 }} onClick={handleSendClick} disabled={!question.trim()}>
+              <TextField label="Your Question" fullWidth margin="normal" value={question} onChange={(e) => onQuestionChange(e.target.value)} />
+              <Button variant="outlined" sx={{ mt: 1 }} onClick={() => onSendClick(question)} disabled={!question.trim()}>
                 Send
               </Button>
               <Box sx={{ mt: 2, border: "1px dashed grey", p: 2 }}>

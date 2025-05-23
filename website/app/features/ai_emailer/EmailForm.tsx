@@ -10,7 +10,6 @@ export default function EmailForm() {
   const dispatch = useDispatch<AppDispatch>();
 
   const { isEditingResponse, editableAiResponse, handleEditClick, handleSaveEdit, handleCancelEdit, setEditableAiResponse } = useEditAiResponse({ aiResponse });
-
   const { handleRequestTypeChange, handleEmailTitleChange, handleQuestionChange, handleActionChange, handleUpdateRequestChange, handleSendToEmailChange, handleSubmit, handleSendEmail } = useEmailFormHandlers();
 
   return (
