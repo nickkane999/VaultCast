@@ -1,7 +1,7 @@
 import { CardContent, Typography, Box, Button } from "@mui/material";
 import { Event } from "../types";
 import styles from "../DecisionHelper.module.css";
-import { formatDate } from "../states/CardComponentState";
+import { formatDate } from "../util/card_component";
 
 // Helper function to format time from HH:mm to h:mm AM/PM
 const formatTimeTo12Hour = (timeString: string) => {

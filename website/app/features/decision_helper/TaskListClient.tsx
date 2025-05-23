@@ -6,7 +6,7 @@ import { Button, TextField, Box, CircularProgress, Checkbox, FormControlLabel, F
 import styles from "./DecisionHelper.module.css";
 import Autocomplete from "@mui/material/Autocomplete";
 import Chip from "@mui/material/Chip";
-import { useTaskListClientState } from "./states/TaskListClientState";
+import { useTaskListClient } from "./hooks/useTaskListClient";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
@@ -53,7 +53,7 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     setAddTagInputValue,
     setNewTagInput,
     setNotification,
-  } = useTaskListClientState({ initialTasks, initialProjects });
+  } = useTaskListClient({ initialTasks, initialProjects });
 
   const handleCloseNotification = () => {
     setNotification(null);
@@ -159,9 +159,9 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
                 key={index}
                 label={tag}
                 onDelete={() => {
-                  setNewTask((prev) => ({
+                  setNewTask((prev: any) => ({
                     ...prev,
-                    tags: prev.tags.filter((t) => t !== tag),
+                    tags: prev.tags.filter((t: string) => t !== tag),
                   }));
                 }}
                 sx={{ mr: 1, mb: 1 }}
@@ -200,44 +200,38 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
               </FormControl>
 
               <Autocomplete
-                multiple
                 id="edit-tags-autocomplete"
                 options={availableTags}
+                multiple
                 value={editedTaskTags}
-                onChange={(_event, newValue) => setEditedTaskTags(newValue)}
+                onChange={(_event, newValue: string[]) => {
+                  setEditedTaskTags(newValue);
+                }}
                 freeSolo
-                renderInput={(params) => <TextField {...params} label="Edit Tags" placeholder="Add a Tag" margin="normal" fullWidth />}
+                renderTags={(value: readonly string[], getTagProps) => value.map((option: string, index: number) => <Chip variant="outlined" label={option} {...getTagProps({ index })} key={option} />)}
+                renderInput={(params) => <TextField {...params} label="Tags" placeholder="Select Tags" margin="normal" fullWidth />}
                 sx={{ mt: 2, mb: 1 }}
               />
+
               <Box className={styles.formButtonsBox}>
                 <Button type="submit" variant="contained" color="primary" disabled={loading}>
                   {loading ? <CircularProgress size={24} /> : "Update"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => {
-                    setEditingId(null);
-                    setEditedTask(null);
-                  }}
-                  disabled={loading}
-                >
+                <Button type="button" variant="outlined" onClick={() => setEditingId(null)} disabled={loading}>
                   Cancel
                 </Button>
               </Box>
             </Box>
           ) : (
-            <CardComponent key={task.id} item={task} onEdit={handleEdit} onDelete={handleDelete} onToggleComplete={handleToggleComplete} onDecision={handleDecision} decision={taskDecisions[task.id]} type="task" />
+            <CardComponent key={task.id} item={task} decision={taskDecisions[task.id!] || undefined} onToggleComplete={handleToggleComplete} onEdit={handleEdit} onDelete={handleDelete} onDecision={handleDecision} type="task" />
           );
         })}
       </Box>
-      {notification && (
-        <Snackbar open={true} autoHideDuration={6000} onClose={handleCloseNotification}>
-          <Alert onClose={handleCloseNotification} severity={notification.type || undefined} sx={{ width: "100%" }}>
-            {notification.message}
-          </Alert>
-        </Snackbar>
-      )}
+      <Snackbar open={!!notification} autoHideDuration={6000} onClose={handleCloseNotification} anchorOrigin={{ vertical: "bottom", horizontal: "left" }}>
+        <Alert onClose={handleCloseNotification} severity={notification?.type || "info"} sx={{ width: "100%" }}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

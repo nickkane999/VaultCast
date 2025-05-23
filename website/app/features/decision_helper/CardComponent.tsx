@@ -2,7 +2,7 @@ import { Card, CardContent, Typography, Button, IconButton, Box, Checkbox, FormC
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { EventCardProps, Event, CommonDecision, Task, Item, Project } from "./types";
 import styles from "./DecisionHelper.module.css";
-import { CardComponentProps, formatDate } from "./states/CardComponentState";
+import { CardComponentProps, formatDate } from "./util/card_component";
 import CalendarCard from "./cards/CalendarCard";
 import TaskCard from "./cards/TaskCard";
 import CommonDecisionCard from "./cards/CommonDecisionCard";

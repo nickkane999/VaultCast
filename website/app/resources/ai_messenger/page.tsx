@@ -6,7 +6,7 @@ import MessengerProfileCard from "@/app/features/ai_messenger/MessengerProfileCa
 import ProfileForm from "@/app/features/ai_messenger/ProfileForm";
 import { Provider } from "react-redux";
 import { store } from "@/store/store";
-import { useAiMessengerPage } from "@/app/features/ai_messenger/AIMessengerHooks";
+import { useAiMessengerPage } from "@/app/features/ai_messenger/useAIMessenger";
 
 function AiMessengerPageContent() {
   const {

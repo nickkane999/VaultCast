@@ -1,7 +1,7 @@
 import { CardContent, Typography, Box } from "@mui/material";
 import { Project } from "../types";
 import styles from "../DecisionHelper.module.css";
-import { formatDate } from "../states/CardComponentState";
+import { formatDate } from "../util/card_component";
 
 interface ProjectCardProps {
   item: Project;

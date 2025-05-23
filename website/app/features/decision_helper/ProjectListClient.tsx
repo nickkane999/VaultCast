@@ -4,10 +4,10 @@ import { Box, Button, TextField, Typography, CircularProgress } from "@mui/mater
 import CardComponent from "./CardComponent";
 import { Project } from "./types";
 import styles from "./DecisionHelper.module.css";
-import { useProjectListState } from "./states/ProjectListState";
+import { useProjectList } from "./hooks/useProjectList";
 
 export default function ProjectListClient({ initialProjects = [] }: { initialProjects: Project[] }) {
-  const { projects, showForm, newProject, editingId, editedProject, loading, handleAddCard, handleFormChange, handleEditFormChange, handleFormSubmit, handleEditFormSubmit, handleDelete, handleEdit, setShowForm, setEditingId } = useProjectListState({
+  const { projects, showForm, newProject, editingId, editedProject, loading, handleAddCard, handleFormChange, handleEditFormChange, handleFormSubmit, handleEditFormSubmit, handleDelete, handleEdit, setShowForm, setEditingId } = useProjectList({
     initialProjects,
   });
 

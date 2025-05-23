@@ -4,7 +4,7 @@ import CardComponent from "./CardComponent";
 import { Event, CommonDecision, Task } from "./types";
 import { Button, TextField, Box, CircularProgress, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Stack } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
-import { useEventListClientState } from "./states/EventListClientState";
+import { useEventListClient } from "./hooks/useEventListClient";
 
 export default function EventListClient({ initialEvents }: { initialEvents: Event[] }) {
   const {
@@ -33,7 +33,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
     setEditingId,
     setEditedEvent,
     displayedEvents,
-  } = useEventListClientState({ initialEvents });
+  } = useEventListClient({ initialEvents });
 
   return (
     <Box className={styles.listContainer}>

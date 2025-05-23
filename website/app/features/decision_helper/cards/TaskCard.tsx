@@ -1,7 +1,7 @@
 import { CardContent, Typography, Box, Checkbox, FormControlLabel, Button, Chip } from "@mui/material";
 import { Task } from "../types";
 import styles from "../DecisionHelper.module.css";
-import { formatDate } from "../states/CardComponentState";
+import { formatDate } from "../util/card_component";
 import { useEffect, useState } from "react";
 
 interface TaskCardProps {

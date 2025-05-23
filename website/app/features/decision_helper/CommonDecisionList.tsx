@@ -5,10 +5,10 @@ import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import CardComponent from "./CardComponent";
 import { CommonDecision } from "./types";
 import styles from "./DecisionHelper.module.css";
-import { useCommonDecisionListState } from "./states/CommonDecisionListState";
+import { useCommonDecisionList } from "./hooks/useCommonDecisionList";
 
 export default function CommonDecisionList({ initialDecisions = [] }: { initialDecisions: CommonDecision[] }) {
-  const { decisions, showForm, newDecision, editingId, editedDecision, loading, commonDecisionResults, handleAddCard, handleFormChange, handleEditFormChange, handleFormSubmit, handleEditFormSubmit, handleDelete, handleEdit, handleDecision, setShowForm, setEditingId } = useCommonDecisionListState({
+  const { decisions, showForm, newDecision, editingId, editedDecision, loading, commonDecisionResults, handleAddCard, handleFormChange, handleEditFormChange, handleFormSubmit, handleEditFormSubmit, handleDelete, handleEdit, handleDecision, setShowForm, setEditingId } = useCommonDecisionList({
     initialDecisions,
   });
 
