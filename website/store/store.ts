@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import aiEmailerReducer from "./aiEmailerSlice";
 import aiMessengerReducer from "./aiMessengerSlice";
-import decisionHelperReducer from "./decisionHelperSlice";
+import decisionHelperReducer from "./decision_helper/decisionHelperSlice";
 
 export const store = configureStore({
   reducer: {

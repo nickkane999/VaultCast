@@ -4,11 +4,10 @@ import styles from "../DecisionHelper.module.css";
 
 interface CommonDecisionCardProps {
   item: CommonDecision;
-  decision?: string;
   onDecision?: (id: string) => void;
 }
 
-export default function CommonDecisionCard({ item, decision, onDecision }: CommonDecisionCardProps) {
+export default function CommonDecisionCard({ item, onDecision }: CommonDecisionCardProps) {
   return (
     <CardContent className={styles.cardContent}>
       <Typography variant="h6" component="div">

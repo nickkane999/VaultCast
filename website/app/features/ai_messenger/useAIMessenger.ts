@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../store/store";
-import { createProfile, deleteProfile, setShowCreateForm, setEditingProfileId, updateProfile, fetchProfiles, fetchAvailableFiles } from "../../../store/aiMessengerSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { createProfile, deleteProfile, setShowCreateForm, setEditingProfileId, updateProfile, fetchProfiles, fetchAvailableFiles } from "@/store/aiMessengerSlice";
 import { MessageProfile } from "./types";
 import { useState, useEffect } from "react";
 
@@ -20,7 +20,6 @@ export const useAiMessengerPage = () => {
     dispatch(fetchAvailableFiles());
   }, [dispatch]);
 
-  // Effect to load editing profile data into form state
   useEffect(() => {
     if (editingProfileId) {
       const profileToEdit = profiles.find((p) => p.id === editingProfileId);
@@ -29,11 +28,9 @@ export const useAiMessengerPage = () => {
         setEditedSystemPrompt(profileToEdit.systemPrompt);
         setEditedFiles(profileToEdit.files || []);
       } else {
-        // If editingProfileId is set but profile not found (e.g., deleted by another user)
         dispatch(setEditingProfileId(null));
       }
     } else {
-      // Clear form state when not editing
       setEditedName("");
       setEditedSystemPrompt("");
       setEditedFiles([]);

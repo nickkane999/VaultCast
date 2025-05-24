@@ -1,12 +1,13 @@
-import { Event, CommonDecision, Task, Project } from "../types";
+import { Event, CommonDecision, Task, Project, Essential } from "../types";
 
 export interface CardComponentProps {
-  item: Event | CommonDecision | Task | Project;
+  item: Event | CommonDecision | Task | Project | Essential;
   onDecision?: (id: string | number) => void;
-  onEdit: (item: Event | CommonDecision | Task | Project) => void;
+  onEdit: (item: Event | CommonDecision | Task | Project | Essential) => void;
   onDelete: (id: string | number) => void;
   decision?: number;
   onToggleComplete?: (item: Task) => void;
+  onComplete?: (id: string | number) => void;
   className?: string;
 }
 

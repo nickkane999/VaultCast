@@ -81,7 +81,6 @@
 .taskButtonRow {
   display: flex;
   gap: 8px; /* Adjust gap as needed, matches Material UI default spacing (1) */
-  /* Removed justify-content: flex-start to rely on parent or default */
   align-items: center; /* Align items vertically in the row */
 }
 
@@ -97,4 +96,47 @@
 .cardContent .descriptionTextField {
   text-align: left;
   color: rgba(0, 0, 0, 0.87);
+}
+
+.taskInfoRow {
+  margin-top: 8px; /* Approximate value for Material UI's mt(1) */
+  margin-bottom: 8px; /* Approximate value for Material UI's mb(1) */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px; /* Approximate value for Material UI's gap(1) */
+}
+
+.essentialContainer {
+  padding: 16px; /* Approximate value for Material UI's padding(2) */
+}
+
+.essentialItemContainer {
+  margin-top: 16px; /* Approximate value for Material UI's marginTop(2) */
+}
+
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px; /* Approximate value for Material UI's gap(0.5) */
+}
+.essentialFormCard {
+  margin-bottom: 16px; /* Approximate value for Material UI's mb(2) */
+  max-width: 1080px;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+}
+.essentialFormTitle {
+  margin-bottom: 16px; /* Approximate value for Material UI's mb(2) */
+}
+.essentialFormFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Approximate value for Material UI's gap(2) */
+}
+.essentialFormButtons {
+  display: flex;
+  gap: 8px; /* Approximate value for Material UI's gap(1) */
+  justify-content: flex-end;
 }

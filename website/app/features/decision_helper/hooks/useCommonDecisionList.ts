@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../../store/store";
-import { setDecisionShowForm, setNewDecision, updateNewDecision, setEditingDecisionId, setEditedDecision, updateEditedDecision, setCommonDecisionResult, createDecision, updateDecisionThunk, deleteDecisionThunk } from "../../../../store/decisionHelperSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { setDecisionShowForm, setNewDecision, updateNewDecision, setEditingDecisionId, setEditedDecision, updateEditedDecision, setCommonDecisionResult, createDecision, updateDecisionThunk, deleteDecisionThunk } from "@/store/decision_helper";
 import { CommonDecision } from "../types";
 
 interface UseCommonDecisionListProps {
@@ -9,7 +9,7 @@ interface UseCommonDecisionListProps {
 
 export const useCommonDecisionList = ({ initialDecisions }: UseCommonDecisionListProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { commonDecisions, decisionShowForm, newDecision, editingDecisionId, editedDecision, commonDecisionResults, loading } = useSelector((state: RootState) => state.decisionHelper);
+  const { commonDecisions, decisionShowForm, newDecision, editingDecisionId, editedDecision, commonDecisionResults, loading } = useSelector((state: RootState) => state.decisionHelper.commonDecisions);
 
   const handleAddCard = () => dispatch(setDecisionShowForm(true));
 

@@ -1,16 +1,14 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../../store/store";
-import { setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, createProject, updateProjectThunk, deleteProjectThunk } from "../../../../store/decisionHelperSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, createProject, updateProjectThunk, deleteProjectThunk } from "@/store/decision_helper";
 import { Project } from "../types";
 import { useEffect } from "react";
-
 interface UseProjectListProps {
   initialProjects: Project[];
 }
-
 export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { projects, projectShowForm, newProject, editingProjectId, editedProject, loading } = useSelector((state: RootState) => state.decisionHelper);
+  const { projects, projectShowForm, newProject, editingProjectId, editedProject, loading } = useSelector((state: RootState) => state.decisionHelper.projects);
 
   const handleAddCard = () => {
     dispatch(setNewProject({ name: "", description: "", dueDate: "" }));

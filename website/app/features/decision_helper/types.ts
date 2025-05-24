@@ -25,6 +25,9 @@ export interface Project extends Decision {
   dueDate: string; // YYYY-MM-DD format
 }
 
+// Import Essential from the essentials slice instead of defining it here
+export type { Essential } from "@/store/decision_helper/essentialsSlice";
+
 export type EventCardProps = {
   event: Event;
   decision?: number;

@@ -15,7 +15,7 @@ export default function CommonDecisionList({ initialDecisions = [] }: { initialD
   return (
     <Box className={styles.listContainer}>
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
-        Add card
+        Add Decision
       </Button>
       {showForm && (
         <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>

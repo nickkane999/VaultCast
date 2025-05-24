@@ -18,14 +18,14 @@ interface CalendarCardProps {
   onDecision?: (id: string) => void;
 }
 
-export default function CalendarCard({ item, decision, onDecision }: CalendarCardProps) {
+export default function CalendarCard({ item, onDecision }: CalendarCardProps) {
   return (
     <CardContent className={styles.cardContent}>
       <Typography variant="h6" component="div">
         {item.name}
       </Typography>
 
-      <Typography variant="body2" color="text.secondary">
+      <Typography>
         {formatDate(item.date)}
         {(item.startTime || item.endTime) && `. ${item.startTime ? formatTimeTo12Hour(item.startTime!) : ""} - ${item.endTime ? formatTimeTo12Hour(item.endTime!) : ""}`}
       </Typography>

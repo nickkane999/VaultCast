@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../../store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   setTaskShowForm,
   setNewTask,
@@ -18,7 +18,7 @@ import {
   createTask,
   updateTaskThunk,
   deleteTaskThunk,
-} from "../../../../store/decisionHelperSlice";
+} from "@/store/decision_helper";
 import { Task, Event, CommonDecision } from "../types";
 import React from "react";
 
@@ -29,7 +29,8 @@ interface UseTaskListClientProps {
 
 export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskListClientProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { tasks, projects, taskShowForm, newTask, editingTaskId, editedTask, editedTaskTags, taskDecisions, tagFilter, statusFilter, availableTags, addTagInputValue, newTagInput, taskNotification, projectFilter, loading } = useSelector((state: RootState) => state.decisionHelper);
+  const { tasks, taskShowForm, newTask, editingTaskId, editedTask, editedTaskTags, taskDecisions, tagFilter, statusFilter, availableTags, addTagInputValue, newTagInput, taskNotification, projectFilter, loading } = useSelector((state: RootState) => state.decisionHelper.tasks);
+  const { projects } = useSelector((state: RootState) => state.decisionHelper.projects);
 
   const handleAddTaskCard = () => {
     dispatch(setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined }));
@@ -196,7 +197,7 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     handleTagChange,
     handleProjectFilterChange,
     setShowForm: (value: boolean) => dispatch(setTaskShowForm(value)),
-    setNewTask: (task: any) => dispatch(setNewTask(task)),
+    setNewTask: (task: { name: string; is_completed: boolean; tags: string[]; projectId?: string | undefined }) => dispatch(setNewTask(task)),
     setEditingId: (id: string | number | null) => dispatch(setEditingTaskId(id)),
     setEditedTask: (task: Task | null) => dispatch(setEditedTask(task)),
     setTagFilter: (filter: string) => dispatch(setTagFilter(filter)),
@@ -204,6 +205,6 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     setEditedTaskTags: (tags: string[]) => dispatch(setEditedTaskTags(tags)),
     setAddTagInputValue: (value: string) => dispatch(setAddTagInputValue(value)),
     setNewTagInput: (value: string) => dispatch(setNewTagInput(value)),
-    setNotification: (notification: any) => dispatch(setTaskNotification(notification)),
+    setNotification: (notification: { message: string; type: "success" | "error" | null } | null) => dispatch(setTaskNotification(notification)),
   };
 };

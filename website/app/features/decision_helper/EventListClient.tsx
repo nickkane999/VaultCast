@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import CardComponent from "./CardComponent";
-import { Event, CommonDecision, Task } from "./types";
+import { Event, CommonDecision, Task, Essential, Project } from "./types";
 import { Button, TextField, Box, CircularProgress, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Stack } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 import { useEventListClient } from "./hooks/useEventListClient";
@@ -58,7 +58,7 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
         <FormControlLabel control={<Checkbox checked={hidePastDates} onChange={(e) => setHidePastDates(e.target.checked)} />} label="Hide past dates" />
       </Box>
       <Button variant="contained" color="primary" onClick={handleAddCard} sx={{ mb: 2 }}>
-        Add card
+        Add Event
       </Button>
       {showForm && (
         <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
@@ -79,37 +79,41 @@ export default function EventListClient({ initialEvents }: { initialEvents: Even
         </Box>
       )}
       <Box className={styles.cardsColumnContainer}>
-        {displayedEvents.map((event: Event) =>
-          editingId === event.id ? (
-            <Box component="form" onSubmit={handleEditFormSubmit} key={event.id} className={styles.formBox}>
-              <TextField name="name" label="Edit Event name" value={editedEvent?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
-              <TextField name="date" label="Event date" type="date" value={editedEvent?.date || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <TextField name="startTime" label="Start Time" type="time" value={editedEvent?.startTime || ""} onChange={handleEditFormChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
-                <TextField name="endTime" label="End Time" type="time" value={editedEvent?.endTime || ""} onChange={handleEditFormChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
-              </Stack>
-              {editedEvent?.attended !== undefined && <FormControlLabel control={<Checkbox checked={editedEvent.attended} onChange={(e) => handleEditFormChange({ target: { name: "attended", value: e.target.checked } } as any)} name="attended" />} label="Attended" />}
-              <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
-                <Button type="submit" variant="contained" color="primary" disabled={loading}>
-                  {loading ? <CircularProgress size={24} /> : "Update"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => {
-                    setEditingId(null);
-                    setEditedEvent(null);
-                  }}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
+        {displayedEvents.map((event: Event) => {
+          const isEditing = editingId !== null && String(editingId) === String(event.id);
+
+          if (isEditing) {
+            return (
+              <Box component="form" onSubmit={handleEditFormSubmit} key={`edit-${event.id}`} className={styles.formBox}>
+                <TextField name="name" label="Edit Event name" value={editedEvent?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
+                <TextField name="date" label="Event date" type="date" value={editedEvent?.date || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
+                <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                  <TextField name="startTime" label="Start Time" type="time" value={editedEvent?.startTime || ""} onChange={handleEditFormChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
+                  <TextField name="endTime" label="End Time" type="time" value={editedEvent?.endTime || ""} onChange={handleEditFormChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
+                </Stack>
+                {editedEvent?.attended !== undefined && <FormControlLabel control={<Checkbox checked={editedEvent.attended} onChange={(e) => handleEditFormChange({ target: { name: "attended", value: e.target.checked } } as any)} name="attended" />} label="Attended" />}
+                <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                  <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                    {loading ? <CircularProgress size={24} /> : "Update"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditedEvent(null);
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
               </Box>
-            </Box>
-          ) : (
-            <CardComponent key={event.id} item={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={handleEdit} onDelete={handleDelete} type="calendar" />
-          )
-        )}
+            );
+          }
+
+          return <CardComponent key={event.id} item={event} decision={decisions[event.id]} onDecision={handleDecision} onEdit={handleEdit as (item: Event | CommonDecision | Task | Project | Essential) => void} onDelete={handleDelete} type="calendar" />;
+        })}
       </Box>
     </Box>
   );

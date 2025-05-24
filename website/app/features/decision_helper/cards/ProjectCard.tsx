@@ -5,11 +5,9 @@ import { formatDate } from "../util/card_component";
 
 interface ProjectCardProps {
   item: Project;
-  decision?: string;
-  onDecision?: (id: string) => void;
 }
 
-export default function ProjectCard({ item, decision, onDecision }: ProjectCardProps) {
+export default function ProjectCard({ item }: ProjectCardProps) {
   return (
     <CardContent className={styles.cardContent}>
       <Typography variant="h6" component="div">
@@ -27,17 +25,6 @@ export default function ProjectCard({ item, decision, onDecision }: ProjectCardP
           Due Date: {formatDate(item.dueDate)}
         </Typography>
       ) : null}
-
-      {/* Add decision button if needed for projects */}
-      {/*
-      {onDecision && (
-        <Box className={styles.buttonDecisionRow}>
-          <Button variant="contained" color="primary" onClick={() => onDecision(item.id as string)}>
-            Make decision
-          </Button>
-        </Box>
-      )}
-      */}
     </CardContent>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import CardComponent from "./CardComponent";
-import { Task, Event, CommonDecision, Project } from "./types";
+import { Task, Event, CommonDecision, Project, Essential } from "./types";
 import { Button, TextField, Box, CircularProgress, Checkbox, FormControlLabel, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import styles from "./DecisionHelper.module.css";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -159,10 +159,7 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
                 key={index}
                 label={tag}
                 onDelete={() => {
-                  setNewTask((prev: any) => ({
-                    ...prev,
-                    tags: prev.tags.filter((t: string) => t !== tag),
-                  }));
+                  setNewTask({ ...newTask, tags: newTask.tags.filter((t: string) => t !== tag) });
                 }}
                 sx={{ mr: 1, mb: 1 }}
               />
@@ -223,7 +220,17 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
               </Box>
             </Box>
           ) : (
-            <CardComponent key={task.id} item={task} decision={taskDecisions[task.id!] || undefined} onToggleComplete={handleToggleComplete} onEdit={handleEdit} onDelete={handleDelete} onDecision={handleDecision} type="task" />
+            <CardComponent
+              key={task.id}
+              item={task}
+              decision={taskDecisions[task.id!] || undefined}
+              onToggleComplete={handleToggleComplete}
+              onEdit={handleEdit as (item: Event | CommonDecision | Task | Project | Essential) => void}
+              onDelete={handleDelete}
+              onDecision={handleDecision}
+              type="task"
+              projects={projects}
+            />
           );
         })}
       </Box>

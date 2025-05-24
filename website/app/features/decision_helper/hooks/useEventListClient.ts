@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../../store/store";
-import { setEventShowForm, setNewEvent, updateNewEvent, setEditingEventId, setEditedEvent, updateEditedEvent, setEventDecision, setDateFilter, setSortOrder, setHidePastDates, createEvent, updateEventThunk, deleteEventThunk } from "../../../../store/decisionHelperSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { setEventShowForm, setNewEvent, updateNewEvent, setEditingEventId, setEditedEvent, updateEditedEvent, setEventDecision, setDateFilter, setSortOrder, setHidePastDates, createEvent, updateEventThunk, deleteEventThunk } from "@/store/decision_helper";
 import { Event, CommonDecision, Task } from "../types";
 import { getFilteredAndSortedEvents } from "../util/event_filter";
 
@@ -10,7 +10,7 @@ interface UseEventListClientProps {
 
 export const useEventListClient = ({ initialEvents }: UseEventListClientProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { calendarEvents, eventShowForm, newEvent, editingEventId, editedEvent, eventDecisions, dateFilter, sortOrder, hidePastDates, loading } = useSelector((state: RootState) => state.decisionHelper);
+  const { calendarEvents, eventShowForm, newEvent, editingEventId, editedEvent, eventDecisions, dateFilter, sortOrder, hidePastDates, loading } = useSelector((state: RootState) => state.decisionHelper.events);
 
   const handleDecision = (id: string | number) => {
     const randomNum = Math.floor(Math.random() * 100) + 1;
