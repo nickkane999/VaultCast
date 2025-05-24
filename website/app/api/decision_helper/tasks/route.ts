@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 function isValidRequest(body: any, id?: string | null) {
   const { name, date, is_completed, tags, startTime, endTime, attended, projectId } = body;
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
 
   const collection = await getCollection("tasks");
   const res = await collection.insertOne(doc);
+  revalidateTag("tasks");
   return NextResponse.json({ id: res.insertedId.toString(), ...doc }, { status: 201 });
 }
 
@@ -91,6 +93,7 @@ export async function DELETE(req: NextRequest) {
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
+  revalidateTag("tasks");
   return NextResponse.json({ success: true }, { status: 200 });
 }
 
@@ -120,6 +123,7 @@ export async function PUT(req: NextRequest) {
   if (!updatedEvent) {
     return NextResponse.json({ error: "Task not found or could not be updated" }, { status: 404 });
   }
+  revalidateTag("tasks");
   return NextResponse.json(
     {
       id: updatedEvent._id.toString(),

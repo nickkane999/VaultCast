@@ -7,6 +7,7 @@ interface ProjectFormState {
   name: string;
   description: string;
   dueDate: string;
+  is_completed: boolean;
 }
 
 interface ProjectsState {
@@ -19,6 +20,11 @@ interface ProjectsState {
   newProject: Omit<Project, "id">;
   editingProjectId: string | number | null;
   editedProject: Omit<Project, "id" | "type"> | null;
+
+  // Filtering state
+  statusFilter: "All" | "Completed" | "Not Completed";
+  sortOrder: "Ascending" | "Descending";
+  hidePastDates: boolean;
 }
 
 const initialState: ProjectsState = {
@@ -28,9 +34,14 @@ const initialState: ProjectsState = {
 
   // Project management initial state
   projectShowForm: false,
-  newProject: { name: "", description: "", dueDate: "" },
+  newProject: { name: "", description: "", dueDate: "", is_completed: false },
   editingProjectId: null,
   editedProject: null,
+
+  // Filtering initial state
+  statusFilter: "Not Completed",
+  sortOrder: "Ascending",
+  hidePastDates: true,
 };
 
 // Async Thunks for projects
@@ -43,7 +54,7 @@ export const fetchProjects = createAsyncThunk<
   }
 >("projects/fetchProjects", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("/api/decision_helper/projects");
+    const response = await fetch("/api/decision_helper/projects", { next: { revalidate: 300 } });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch projects");
@@ -140,6 +151,17 @@ const projectsSlice = createSlice({
         state.editedProject = { ...state.editedProject, ...action.payload };
       }
     },
+
+    // Filter actions
+    setStatusFilter: (state, action: PayloadAction<"All" | "Completed" | "Not Completed">) => {
+      state.statusFilter = action.payload;
+    },
+    setSortOrder: (state, action: PayloadAction<"Ascending" | "Descending">) => {
+      state.sortOrder = action.payload;
+    },
+    setHidePastDates: (state, action: PayloadAction<boolean>) => {
+      state.hidePastDates = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -160,7 +182,7 @@ const projectsSlice = createSlice({
       .addCase(createProject.fulfilled, (state, action: PayloadAction<Project>) => {
         state.projects.push(action.payload);
         state.projectShowForm = false;
-        state.newProject = { name: "", description: "", dueDate: "" };
+        state.newProject = { name: "", description: "", dueDate: "", is_completed: false };
       })
       .addCase(createProject.rejected, (state, action) => {
         state.error = action.payload || "Failed to create project";
@@ -185,7 +207,7 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { setProjects, clearProjectsError, setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject } = projectsSlice.actions;
+export const { setProjects, clearProjectsError, setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, setStatusFilter, setSortOrder, setHidePastDates } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
 export type { ProjectsState, ProjectFormState };

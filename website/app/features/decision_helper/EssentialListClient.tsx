@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, CircularProgress, Button, TextField } from "@mui/material";
+import { Box, Typography, CircularProgress, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox } from "@mui/material";
 import { useEssentialListClient } from "./hooks/useEssentialListClient";
 import CardComponent from "./CardComponent";
 import EssentialForm from "./EssentialForm";
@@ -29,6 +29,12 @@ export default function EssentialListClient({ initialEssentials }: EssentialList
     handleCompleteEssential,
     handleUpdateNewEssential,
     handleUpdateEditedEssential,
+    dateFilter,
+    setDateFilter,
+    sortOrder,
+    setSortOrder,
+    hidePastDates,
+    setHidePastDates,
   } = useEssentialListClient({ initialEssentials });
 
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +63,26 @@ export default function EssentialListClient({ initialEssentials }: EssentialList
 
   return (
     <Box className={styles.essentialContainer}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap", justifyContent: "center" }}>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="date-filter-label">Filter</InputLabel>
+          <Select labelId="date-filter-label" id="date-filter" value={dateFilter} label="Filter" onChange={(e) => setDateFilter(e.target.value as string)}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Current Year">Current Year</MenuItem>
+            <MenuItem value="Current Month">Current Month</MenuItem>
+            <MenuItem value="Current Week">Current Week</MenuItem>
+            <MenuItem value="Today">Today</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="sort-order-label">Order</InputLabel>
+          <Select labelId="sort-order-label" id="sort-order" value={sortOrder} label="Order" onChange={(e) => setSortOrder(e.target.value as "Ascending" | "Descending")}>
+            <MenuItem value="Ascending">Ascending</MenuItem>
+            <MenuItem value="Descending">Descending</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControlLabel control={<Checkbox checked={hidePastDates} onChange={(e) => setHidePastDates(e.target.checked)} />} label="Hide past dates" />
+      </Box>
       <Button variant="contained" onClick={handleAddEssential}>
         Add Essential
       </Button>

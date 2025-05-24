@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 function isValidRequest(body: any, id?: string | null) {
   const { name, description, dueDate } = body;
@@ -14,7 +15,7 @@ function isValidRequest(body: any, id?: string | null) {
   return null; // Request is valid
 }
 
-async function updateProject(id: string, updateData: { name?: string; description?: string; dueDate?: string }) {
+async function updateProject(id: string, updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean }) {
   const collection = await getCollection("projects");
   const objectId = new ObjectId(id);
   const result = await collection.updateOne({ _id: objectId }, { $set: updateData });
@@ -33,6 +34,7 @@ export async function GET() {
     name: p.name,
     description: p.description,
     dueDate: p.dueDate,
+    is_completed: p.is_completed || false,
   }));
   return NextResponse.json(result);
 }
@@ -43,13 +45,25 @@ export async function POST(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, description, dueDate } = body;
-  const doc: any = { name, description, dueDate };
+  const { name, description, dueDate, is_completed = false } = body;
+  const doc: any = { name, description, dueDate, is_completed };
 
   const collection = await getCollection("projects");
   const res = await collection.insertOne(doc);
   const insertedProject = await collection.findOne({ _id: res.insertedId });
-  return NextResponse.json({ id: res.insertedId.toString(), name: insertedProject?.name, description: insertedProject?.description, dueDate: insertedProject?.dueDate }, { status: 201 });
+
+  revalidateTag("projects");
+
+  return NextResponse.json(
+    {
+      id: res.insertedId.toString(),
+      name: insertedProject?.name,
+      description: insertedProject?.description,
+      dueDate: insertedProject?.dueDate,
+      is_completed: insertedProject?.is_completed || false,
+    },
+    { status: 201 }
+  );
 }
 
 export async function DELETE(req: NextRequest) {
@@ -63,6 +77,9 @@ export async function DELETE(req: NextRequest) {
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
+
+  revalidateTag("projects");
+
   return NextResponse.json({ success: true }, { status: 200 });
 }
 
@@ -74,11 +91,12 @@ export async function PUT(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, description, dueDate } = body;
-  const updateData: { name?: string; description?: string; dueDate?: string } = {};
+  const { name, description, dueDate, is_completed } = body;
+  const updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean } = {};
   if (name !== undefined) updateData.name = name;
   if (description !== undefined) updateData.description = description;
   if (dueDate !== undefined) updateData.dueDate = dueDate;
+  if (is_completed !== undefined) updateData.is_completed = is_completed;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields provided for update" }, { status: 400 });
@@ -88,5 +106,17 @@ export async function PUT(req: NextRequest) {
   if (!updatedProject) {
     return NextResponse.json({ error: "Project not found or could not be updated" }, { status: 404 });
   }
-  return NextResponse.json({ id: updatedProject._id.toString(), name: updatedProject.name, description: updatedProject.description, dueDate: updatedProject.dueDate }, { status: 200 });
+
+  revalidateTag("projects");
+
+  return NextResponse.json(
+    {
+      id: updatedProject._id.toString(),
+      name: updatedProject.name,
+      description: updatedProject.description,
+      dueDate: updatedProject.dueDate,
+      is_completed: updatedProject.is_completed || false,
+    },
+    { status: 200 }
+  );
 }

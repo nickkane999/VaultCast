@@ -23,6 +23,7 @@ export interface Task extends Decision {
 export interface Project extends Decision {
   description: string;
   dueDate: string; // YYYY-MM-DD format
+  is_completed: boolean;
 }
 
 // Import Essential from the essentials slice instead of defining it here

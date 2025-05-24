@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 function isValidRequest(body: any, id?: string | null) {
   const { name } = body;
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
 
   const collection = await getCollection("decisions");
   const res = await collection.insertOne(doc);
+  revalidateTag("decisions");
   return NextResponse.json({ id: res.insertedId.toString(), name: doc.name }, { status: 201 });
 }
 
@@ -57,6 +59,7 @@ export async function DELETE(req: NextRequest) {
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: "Decision not found" }, { status: 404 });
   }
+  revalidateTag("decisions");
   return NextResponse.json({ success: true }, { status: 200 });
 }
 
@@ -80,5 +83,6 @@ export async function PUT(req: NextRequest) {
   if (!updatedDecision) {
     return NextResponse.json({ error: "Decision not found or could not be updated" }, { status: 404 });
   }
+  revalidateTag("decisions");
   return NextResponse.json({ id: updatedDecision._id.toString(), name: updatedDecision.name }, { status: 200 });
 }

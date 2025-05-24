@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/app/api/mongodb";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 // Helper function to validate request body for creating/updating essentials
 function isValidEssentialRequest(body: any, id?: string | null) {
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
 
     const collection = await getCollection("essentials");
     const res = await collection.insertOne(doc);
+    revalidateTag("essentials");
     return NextResponse.json({ id: res.insertedId.toString(), ...doc }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating essential:", error);
@@ -93,6 +95,7 @@ export async function DELETE(req: NextRequest) {
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Essential not found" }, { status: 404 });
     }
+    revalidateTag("essentials");
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
     console.error(`Error deleting essential with ID ${req.nextUrl.searchParams.get("id")}:`, error);
@@ -143,6 +146,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Essential updated but not found afterwards" }, { status: 500 });
     }
 
+    revalidateTag("essentials");
     return NextResponse.json(
       {
         id: updatedEssential._id.toString(),

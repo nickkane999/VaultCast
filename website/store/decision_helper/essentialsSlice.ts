@@ -46,7 +46,7 @@ export const fetchEssentials = createAsyncThunk<
   }
 >("essentials/fetchEssentials", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("/api/decision_helper/essentials");
+    const response = await fetch("/api/decision_helper/essentials", { next: { revalidate: 300 } });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch essentials");

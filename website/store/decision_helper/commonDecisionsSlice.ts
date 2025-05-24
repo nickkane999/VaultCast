@@ -39,7 +39,7 @@ export const fetchCommonDecisions = createAsyncThunk<
   }
 >("commonDecisions/fetchCommonDecisions", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("/api/decision_helper/decisions");
+    const response = await fetch("/api/decision_helper/decisions", { next: { revalidate: 300 } });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch common decisions");

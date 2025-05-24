@@ -63,17 +63,6 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     <Box className={styles.listContainer}>
       <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap", justifyContent: "center" }}>
         <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel id="tag-filter-label">Tags</InputLabel>
-          <Select labelId="tag-filter-label" id="tag-filter" value={tagFilter} label="Tags" onChange={(e) => setTagFilter(e.target.value as string)}>
-            <MenuItem value="All">All</MenuItem>
-            {availableTags.map((tag) => (
-              <MenuItem key={tag} value={tag}>
-                {tag}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 120 }}>
           <InputLabel id="status-filter-label">Status</InputLabel>
           <Select labelId="status-filter-label" id="status-filter" value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value as "All" | "Completed" | "Not Completed")}>
             <MenuItem value="All">All</MenuItem>
@@ -81,8 +70,6 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
             <MenuItem value="Not Completed">Not Completed</MenuItem>
           </Select>
         </FormControl>
-
-        {/* Project Filter Dropdown */}
         <FormControl sx={{ minWidth: 150 }}>
           <InputLabel id="project-filter-label">Project</InputLabel>
           <Select labelId="project-filter-label" id="project-filter" value={projectFilter} label="Project" onChange={(e) => handleProjectFilterChange(e.target.value === "" ? "All" : (e.target.value as string))}>
@@ -90,6 +77,17 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
             {projects.map((project) => (
               <MenuItem key={project.id} value={project.id}>
                 {project.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel id="tag-filter-label">Tags</InputLabel>
+          <Select labelId="tag-filter-label" id="tag-filter" value={tagFilter} label="Tags" onChange={(e) => setTagFilter(e.target.value as string)}>
+            <MenuItem value="All">All</MenuItem>
+            {availableTags.map((tag) => (
+              <MenuItem key={tag} value={tag}>
+                {tag}
               </MenuItem>
             ))}
           </Select>

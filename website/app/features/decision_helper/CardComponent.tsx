@@ -40,7 +40,7 @@ export default function CardComponent({ item, decision, onDecision, onEdit, onDe
       {type === "calendar" && <CalendarCard item={item as Event} onDecision={handleDecision} />}
       {type === "task" && <TaskCard item={item as Task} projects={projects || []} onDecision={onDecision} onToggleComplete={onToggleComplete} />}
       {type === "common_decision" && <CommonDecisionCard item={item as CommonDecision} onDecision={handleDecision} />}
-      {type === "project" && <ProjectCard item={item as Project} />}
+      {type === "project" && <ProjectCard item={item as Project} onToggleComplete={onToggleComplete} />}
       {type === "essential" && <EssentialCard item={item as Essential} onComplete={handleComplete} onDecision={handleDecision} />}
 
       {type !== "project" && decision && (

@@ -38,8 +38,8 @@ const initialState: EventsState = {
   editingEventId: null,
   editedEvent: null,
   eventDecisions: {},
-  dateFilter: "All",
-  sortOrder: "Descending",
+  dateFilter: "Current Month",
+  sortOrder: "Ascending",
   hidePastDates: true,
 };
 
@@ -53,7 +53,7 @@ export const fetchCalendarEvents = createAsyncThunk<
   }
 >("events/fetchCalendarEvents", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("/api/decision_helper/events");
+    const response = await fetch("/api/decision_helper/events", { next: { revalidate: 300 } });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch calendar events");

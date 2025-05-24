@@ -6,7 +6,7 @@ export interface CardComponentProps {
   onEdit: (item: Event | CommonDecision | Task | Project | Essential) => void;
   onDelete: (id: string | number) => void;
   decision?: number;
-  onToggleComplete?: (item: Task) => void;
+  onToggleComplete?: (item: Task | Project) => void;
   onComplete?: (id: string | number) => void;
   className?: string;
 }

@@ -62,7 +62,7 @@ export const fetchTasks = createAsyncThunk<
   }
 >("tasks/fetchTasks", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("/api/decision_helper/tasks");
+    const response = await fetch("/api/decision_helper/tasks", { next: { revalidate: 300 } });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch tasks");
