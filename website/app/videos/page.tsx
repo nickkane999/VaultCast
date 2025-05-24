@@ -1,13 +1,14 @@
-import styles from "../page.module.css";
-import VideoPlayer from "../../lib/components/VideoPlayer";
+import { revalidatePath } from "next/cache";
+import { fetchVideosData } from "@/lib/features/videos/util/page_cache";
+import VideosClient from "./VideosClient";
 
-export default function Videos() {
-  const videoFilename = "John Wick.mp4";
+export default async function VideosPage() {
+  const data = await fetchVideosData();
 
-  return (
-    <div className={styles.page}>
-      <h1>Videos</h1>
-      <VideoPlayer filename={videoFilename} />
-    </div>
-  );
+  const refreshAction = async () => {
+    "use server";
+    revalidatePath("/videos");
+  };
+
+  return <VideosClient initialData={data} refreshAction={refreshAction} />;
 }

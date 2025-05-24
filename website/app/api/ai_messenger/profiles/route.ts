@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/server/mongodb";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 // Helper function to transform MongoDB document to profile format
 function transformProfile(doc: any) {
@@ -31,7 +32,6 @@ export async function POST(req: NextRequest) {
   try {
     const profileData = await req.json();
 
-    // Basic validation
     if (!profileData.name || !profileData.systemPrompt || !Array.isArray(profileData.files)) {
       return NextResponse.json({ error: "Invalid profile data" }, { status: 400 });
     }
@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
       files: profileData.files,
     });
 
-    // Return the created profile with transformed ID
     const createdProfile = transformProfile({
       _id: result.insertedId,
       name: profileData.name,
@@ -51,6 +50,7 @@ export async function POST(req: NextRequest) {
       files: profileData.files,
     });
 
+    revalidateTag("ai-messenger");
     return NextResponse.json(createdProfile, { status: 201 });
   } catch (error) {
     console.error("Error creating messenger profile:", error);

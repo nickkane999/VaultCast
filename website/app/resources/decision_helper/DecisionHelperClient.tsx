@@ -2,15 +2,15 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import styles from "@/app/page.module.css";
-import EventListClient from "@/app/features/decision_helper/EventListClient";
-import CommonDecisionList from "@/app/features/decision_helper/CommonDecisionList";
-import TaskListClient from "@/app/features/decision_helper/TaskListClient";
-import ProjectListClient from "@/app/features/decision_helper/ProjectListClient";
-import EssentialListClient from "@/app/features/decision_helper/EssentialListClient";
+import EventListClient from "@/lib/features/decision_helper/EventListClient";
+import CommonDecisionList from "@/lib/features/decision_helper/CommonDecisionList";
+import TaskListClient from "@/lib/features/decision_helper/TaskListClient";
+import ProjectListClient from "@/lib/features/decision_helper/ProjectListClient";
+import EssentialListClient from "@/lib/features/decision_helper/EssentialListClient";
 import { Tabs, Tab, Box, Typography, Button, Alert } from "@mui/material";
 import { Provider, useDispatch } from "react-redux";
 import { store } from "@/store/store";
-import { Task, Event, CommonDecision, Project, Essential } from "@/app/features/decision_helper/types";
+import { Task, Event, CommonDecision, Project, Essential } from "@/lib/features/decision_helper/types";
 import { setTasks, setCalendarEvents, setProjects, setCommonDecisions, setEssentials } from "@/store/decision_helper";
 
 interface DecisionHelperData {

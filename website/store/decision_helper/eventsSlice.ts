@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import { Event } from "../../app/features/decision_helper/types";
-import { addEvent, updateEvent, deleteEvent } from "../../app/features/decision_helper/queries/event_queries";
+import { Event } from "../../lib/features/decision_helper/types";
+import { addEvent, updateEvent, deleteEvent } from "../../lib/features/decision_helper/queries/event_queries";
 
 interface EventFormState {
   name: string;

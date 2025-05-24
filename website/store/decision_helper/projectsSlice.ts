@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import { Project } from "../../app/features/decision_helper/types";
-import { addProject, updateProject, deleteProject } from "../../app/features/decision_helper/queries/project_queries";
+import { Project } from "../../lib/features/decision_helper/types";
+import { addProject, updateProject, deleteProject } from "../../lib/features/decision_helper/queries/project_queries";
 
 interface ProjectFormState {
   name: string;
@@ -153,7 +153,7 @@ const projectsSlice = createSlice({
     },
 
     // Filter actions
-    setStatusFilter: (state, action: PayloadAction<"All" | "Completed" | "Not Completed">) => {
+    setProjectStatusFilter: (state, action: PayloadAction<"All" | "Completed" | "Not Completed">) => {
       state.statusFilter = action.payload;
     },
     setSortOrder: (state, action: PayloadAction<"Ascending" | "Descending">) => {
@@ -207,7 +207,7 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { setProjects, clearProjectsError, setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, setStatusFilter, setSortOrder, setHidePastDates } = projectsSlice.actions;
+export const { setProjects, clearProjectsError, setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, setProjectStatusFilter, setSortOrder, setHidePastDates } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
 export type { ProjectsState, ProjectFormState };

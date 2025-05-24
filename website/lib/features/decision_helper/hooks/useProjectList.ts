@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, createProject, updateProjectThunk, deleteProjectThunk, setStatusFilter, setSortOrder, setHidePastDates } from "@/store/decision_helper";
+import { setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, createProject, updateProjectThunk, deleteProjectThunk, setProjectStatusFilter, setSortOrder, setHidePastDates } from "@/store/decision_helper";
 import { Project } from "../types";
 import { useEffect } from "react";
 
@@ -145,7 +145,7 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     handleToggleComplete,
     setShowForm: (show: boolean) => dispatch(setProjectShowForm(show)),
     setEditingId: (id: string | number | null) => dispatch(setEditingProjectId(id)),
-    setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setStatusFilter(filter)),
+    setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setProjectStatusFilter(filter)),
     setSortOrder: (order: "Ascending" | "Descending") => dispatch(setSortOrder(order)),
     setHidePastDates: (hide: boolean) => dispatch(setHidePastDates(hide)),
   };

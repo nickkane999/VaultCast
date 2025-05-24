@@ -1,7 +1,7 @@
 import React from "react";
 import { revalidatePath } from "next/cache";
 import DecisionHelperClient from "./DecisionHelperClient";
-import { fetchDecisionHelperData } from "../../features/decision_helper/util/page_cache";
+import { fetchDecisionHelperData } from "@/lib/features/decision_helper/util/page_cache";
 
 async function refreshData() {
   "use server";

@@ -25,65 +25,114 @@ app.use(
   })
 );
 
+// Add JSON parsing middleware
+app.use(express.json());
+
 // Serve static files from different directories
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/videos", express.static(path.join(__dirname, "videos")));
 app.use("/files", express.static(path.join(__dirname, "files")));
 
-// Video streaming route with enhanced security
-app.get("/videos/:filename", (req, res) => {
-  // Sanitize filename to prevent directory traversal
-  const filename = path.basename(req.params.filename);
-  const videoPath = path.join(__dirname, "media", "videos", filename);
+// Helper function to check if a string is a valid MongoDB ObjectId
+function isValidObjectId(str) {
+  return /^[a-f\d]{24}$/i.test(str);
+}
 
-  console.log(`Attempting to stream video: ${videoPath}`);
-
-  // Check if file exists
-  if (!fs.existsSync(videoPath)) {
-    console.log(`Video not found at path: ${videoPath}`);
-    return res.status(404).json({ error: "Video not found" });
+// Helper function to get video filename from database by ID
+async function getVideoFilenameById(videoId) {
+  try {
+    const response = await fetch(`${process.env.NEXT_APP_URL || "http://localhost:3000"}/api/videos/${videoId}`);
+    if (!response.ok) {
+      return null;
+    }
+    const videoRecord = await response.json();
+    return videoRecord.filename;
+  } catch (error) {
+    console.error("Error fetching video filename from database:", error);
+    return null;
   }
+}
 
-  // Basic file type verification
-  if (!filename.toLowerCase().endsWith(".mp4")) {
-    return res.status(400).json({ error: "Invalid file type" });
-  }
+// Video streaming route with enhanced security (handles both filenames and ObjectIds)
+app.get("/videos/:filename", async (req, res) => {
+  try {
+    let actualFilename = req.params.filename;
+    console.log(`Original filename parameter: ${actualFilename}`);
 
-  const stat = fs.statSync(videoPath);
-  const fileSize = stat.size;
-  const range = req.headers.range;
+    // Check if the filename is actually a MongoDB ObjectId
+    if (isValidObjectId(actualFilename)) {
+      console.log(`Detected ObjectId: ${actualFilename}, looking up actual filename...`);
 
-  if (range) {
-    const parts = range.replace(/bytes=/, "").split("-");
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      // Get the actual filename from the database
+      const filenameFromDb = await getVideoFilenameById(actualFilename);
 
-    if (isNaN(start) || isNaN(end) || start >= fileSize || end >= fileSize || start > end) {
-      return res.status(416).send("Requested range not satisfiable");
+      if (!filenameFromDb) {
+        console.log(`No video record found for ObjectId: ${actualFilename}`);
+        return res.status(404).json({ error: "Video record not found" });
+      }
+
+      actualFilename = filenameFromDb;
+      console.log(`Found actual filename: ${actualFilename}`);
     }
 
-    const chunksize = end - start + 1;
-    const file = fs.createReadStream(videoPath, { start, end });
+    // Sanitize filename to prevent directory traversal
+    const sanitizedFilename = path.basename(actualFilename);
+    const videoPath = path.join(__dirname, "media", "videos", sanitizedFilename);
 
-    const head = {
-      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
-      "Accept-Ranges": "bytes",
-      "Content-Length": chunksize,
-      "Content-Type": "video/mp4",
-      "Cache-Control": "private, no-cache, no-store, must-revalidate",
-    };
+    console.log(`Attempting to stream video: ${videoPath}`);
 
-    res.writeHead(206, head);
-    file.pipe(res);
-  } else {
-    const head = {
-      "Content-Length": fileSize,
-      "Content-Type": "video/mp4",
-      "Cache-Control": "private, no-cache, no-store, must-revalidate",
-    };
+    // Check if file exists
+    if (!fs.existsSync(videoPath)) {
+      console.log(`Video file not found at path: ${videoPath}`);
+      return res.status(404).json({ error: "Video file not found" });
+    }
 
-    res.writeHead(200, head);
-    fs.createReadStream(videoPath).pipe(res);
+    // Basic file type verification
+    const validExtensions = [".mp4", ".avi", ".mov", ".mkv"];
+    const fileExtension = path.extname(sanitizedFilename).toLowerCase();
+    if (!validExtensions.includes(fileExtension)) {
+      return res.status(400).json({ error: "Invalid file type" });
+    }
+
+    const stat = fs.statSync(videoPath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      if (isNaN(start) || isNaN(end) || start >= fileSize || end >= fileSize || start > end) {
+        return res.status(416).send("Requested range not satisfiable");
+      }
+
+      const chunksize = end - start + 1;
+      const file = fs.createReadStream(videoPath, { start, end });
+
+      const head = {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunksize,
+        "Content-Type": `video/${fileExtension.slice(1)}`,
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+      };
+
+      res.writeHead(206, head);
+      file.pipe(res);
+    } else {
+      const head = {
+        "Content-Length": fileSize,
+        "Content-Type": `video/${fileExtension.slice(1)}`,
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+      };
+
+      res.writeHead(200, head);
+      fs.createReadStream(videoPath).pipe(res);
+    }
+  } catch (error) {
+    console.error("Error streaming video:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -101,6 +150,22 @@ app.get("/api/files/ai_messenger", (req, res) => {
     // Filter out directories if necessary, here we assume all are files or we want to include all entries
     // For now, just return the list of names
     res.json({ files: files });
+  });
+});
+
+// New endpoint to list video files in media/videos directory
+app.get("/api/files/videos", (req, res) => {
+  const targetDir = path.join(__dirname, "media", "videos");
+
+  fs.readdir(targetDir, (err, files) => {
+    if (err) {
+      console.error("Error listing video files in", targetDir, ":", err);
+      return res.status(500).json({ error: "Unable to list video files" });
+    }
+
+    const videoFiles = files.filter((file) => file.toLowerCase().endsWith(".mp4") || file.toLowerCase().endsWith(".avi") || file.toLowerCase().endsWith(".mov") || file.toLowerCase().endsWith(".mkv"));
+
+    res.json({ files: videoFiles });
   });
 });
 

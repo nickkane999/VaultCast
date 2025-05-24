@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { RootState } from "./store"; // Adjust path as needed
-import { MessageProfile } from "../app/features/ai_messenger/types"; // Adjust path as needed
+import { MessageProfile } from "@/lib/features/ai_messenger/types"; // Adjust path as needed
 
 interface AiMessengerState {
   profiles: MessageProfile[];
@@ -10,6 +10,16 @@ interface AiMessengerState {
   error: string | null;
   // Add state for the profile being edited, if any
   editingProfileId: string | null;
+  // Add question and AI response state per profile
+  questions: Record<string, string>; // profileId -> question
+  aiResponses: Record<string, string>; // profileId -> aiResponse
+  chatLoading: Record<string, boolean>; // profileId -> loading state for chat
+  // Form state for editing
+  editForm: {
+    name: string;
+    systemPrompt: string;
+    files: string[];
+  };
 }
 
 const initialState: AiMessengerState = {
@@ -19,6 +29,14 @@ const initialState: AiMessengerState = {
   loading: false,
   error: null,
   editingProfileId: null,
+  questions: {},
+  aiResponses: {},
+  chatLoading: {},
+  editForm: {
+    name: "",
+    systemPrompt: "",
+    files: [],
+  },
 };
 
 // Async Thunks
@@ -56,8 +74,9 @@ export const fetchProfiles = createAsyncThunk<
   }
 >("aiMessenger/fetchProfiles", async (_, { rejectWithValue }) => {
   try {
-    // TODO: Implement actual API call to fetch profiles
-    const response = await fetch("/api/messenger_profiles"); // Assuming an API endpoint
+    const response = await fetch("/api/ai_messenger/profiles", {
+      next: { revalidate: 300, tags: ["ai-messenger"] },
+    });
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch profiles");
@@ -80,8 +99,7 @@ export const createProfile = createAsyncThunk<
   }
 >("aiMessenger/createProfile", async (newProfileData, { rejectWithValue }) => {
   try {
-    // TODO: Implement actual API call to create a profile
-    const response = await fetch("/api/messenger_profiles", {
+    const response = await fetch("/api/ai_messenger/profiles", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -111,8 +129,7 @@ export const updateProfile = createAsyncThunk<
   }
 >("aiMessenger/updateProfile", async (profileData, { rejectWithValue }) => {
   try {
-    // TODO: Implement actual API call to update a profile
-    const response = await fetch(`/api/messenger_profiles/${profileData.id}`, {
+    const response = await fetch(`/api/ai_messenger/profiles/${profileData.id}`, {
       method: "PUT", // or PATCH
       headers: {
         "Content-Type": "application/json",
@@ -142,8 +159,7 @@ export const deleteProfile = createAsyncThunk<
   }
 >("aiMessenger/deleteProfile", async (profileId, { rejectWithValue }) => {
   try {
-    // TODO: Implement actual API call to delete a profile
-    const response = await fetch(`/api/messenger_profiles/${profileId}`, {
+    const response = await fetch(`/api/ai_messenger/profiles/${profileId}`, {
       method: "DELETE",
     });
 
@@ -157,6 +173,76 @@ export const deleteProfile = createAsyncThunk<
   } catch (error: any) {
     console.error("Error deleting profile:", error);
     return rejectWithValue(error.message || "Failed to delete profile");
+  }
+});
+
+// Thunk to send message to AI with streaming
+export const sendMessageToAI = createAsyncThunk<
+  string, // Return type on fulfillment (AI response)
+  { profileId: string; question: string }, // Argument type
+  {
+    state: RootState;
+    rejectValue: string;
+  }
+>("aiMessenger/sendMessage", async ({ profileId, question }, { getState, rejectWithValue, dispatch }) => {
+  try {
+    const state = getState();
+    const profile = state.aiMessenger.profiles.find((p) => p.id === profileId);
+
+    if (!profile) {
+      return rejectWithValue("Profile not found");
+    }
+
+    // Clear any existing response for this profile and set chat loading
+    dispatch(setAiResponse({ profileId, response: "" }));
+    dispatch(setChatLoading({ profileId, loading: true }));
+
+    const response = await fetch("/api/ai_messenger", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        profileId,
+        question,
+        systemPrompt: profile.systemPrompt,
+        files: profile.files || [],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return rejectWithValue(errorText || "Failed to send message");
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return rejectWithValue("Failed to get reader from response body.");
+    }
+
+    const decoder = new TextDecoder();
+    let streamedResponse = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      const chunk = decoder.decode(value, { stream: true });
+      streamedResponse += chunk;
+
+      // Update the Redux state with the accumulated response in real-time
+      dispatch(setAiResponse({ profileId, response: streamedResponse }));
+    }
+
+    // Clear chat loading when done
+    dispatch(setChatLoading({ profileId, loading: false }));
+    return streamedResponse;
+  } catch (error: any) {
+    console.error("Error sending message:", error);
+    // Clear chat loading on error
+    dispatch(setChatLoading({ profileId, loading: false }));
+    return rejectWithValue(error.message || "Failed to send message");
   }
 });
 
@@ -180,22 +266,46 @@ const aiMessengerSlice = createSlice({
     },
     setEditingProfileId: (state, action: PayloadAction<string | null>) => {
       state.editingProfileId = action.payload;
-      // If an ID is set, it means we are editing a specific card. The main form should not automatically open.
-      // If the main form is ALREADY open for this profile, it can stay open.
-      // If action.payload is null, it means we are cancelling an edit.
-      if (!action.payload && state.showCreateForm) {
-        // If we are clearing editingProfileId AND the main form is shown,
-        // it implies we were editing with the main form, so hide it.
-        // However, this might conflict if a card edit is cancelled while main form is open for creation.
-        // A more robust solution for main form edit: have a separate state like `editingProfileWithMainFormId`
-        // For now, just removing the problematic line is the safest first step.
+
+      // If setting a profile ID, populate the edit form with that profile's data
+      if (action.payload) {
+        const profile = state.profiles.find((p) => p.id === action.payload);
+        if (profile) {
+          state.editForm = {
+            name: profile.name,
+            systemPrompt: profile.systemPrompt,
+            files: profile.files || [],
+          };
+        }
+      } else {
+        // If clearing the editing ID, clear the form
+        state.editForm = { name: "", systemPrompt: "", files: [] };
       }
     },
     setAvailableFiles: (state, action: PayloadAction<string[]>) => {
       state.availableFiles = action.payload;
     },
-    // You might add reducers for simple state updates if needed
-    // e.g., setLoading, setError if not fully handled by extraReducers
+    setQuestion: (state, action: PayloadAction<{ profileId: string; question: string }>) => {
+      state.questions[action.payload.profileId] = action.payload.question;
+    },
+    setAiResponse: (state, action: PayloadAction<{ profileId: string; response: string }>) => {
+      state.aiResponses[action.payload.profileId] = action.payload.response;
+    },
+    setChatLoading: (state, action: PayloadAction<{ profileId: string; loading: boolean }>) => {
+      state.chatLoading[action.payload.profileId] = action.payload.loading;
+    },
+    setEditForm: (state, action: PayloadAction<{ name: string; systemPrompt: string; files: string[] }>) => {
+      state.editForm = action.payload;
+    },
+    updateEditForm: (state, action: PayloadAction<Partial<{ name: string; systemPrompt: string; files: string[] }>>) => {
+      state.editForm = { ...state.editForm, ...action.payload };
+    },
+    clearEditForm: (state) => {
+      state.editForm = { name: "", systemPrompt: "", files: [] };
+    },
+    setProfiles: (state, action: PayloadAction<MessageProfile[]>) => {
+      state.profiles = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -269,11 +379,24 @@ const aiMessengerSlice = createSlice({
       .addCase(deleteProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as string) || "Failed to delete profile";
+      })
+      // Handle sendMessageToAI lifecycle
+      .addCase(sendMessageToAI.pending, (state) => {
+        // Don't set global loading for chat - we handle it per-card
+        state.error = null;
+      })
+      .addCase(sendMessageToAI.fulfilled, (state, action) => {
+        // Don't set aiResponse here since it's updated in real-time during streaming
+        // Don't change global loading state
+      })
+      .addCase(sendMessageToAI.rejected, (state, action) => {
+        // Don't change global loading state for chat errors
+        state.error = (action.payload as string) || "Failed to send message";
       });
   },
 });
 
-export const { setShowCreateForm, setEditingProfileId, setAvailableFiles } = aiMessengerSlice.actions;
+export const { setShowCreateForm, setEditingProfileId, setAvailableFiles, setQuestion, setAiResponse, setChatLoading, setEditForm, updateEditForm, clearEditForm, setProfiles } = aiMessengerSlice.actions;
 
 export default aiMessengerSlice.reducer;
 export type { AiMessengerState };

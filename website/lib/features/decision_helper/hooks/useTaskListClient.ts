@@ -10,7 +10,7 @@ import {
   setEditedTaskTags,
   setTaskDecision,
   setTagFilter,
-  setStatusFilter,
+  setTaskStatusFilter,
   setAddTagInputValue,
   setNewTagInput,
   setTaskNotification,
@@ -126,7 +126,7 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
         if (statusFilter === "Completed" && !task.is_completed) {
           return false;
         }
-        if (statusFilter !== "Completed" && task.is_completed) {
+        if (statusFilter === "Not Completed" && task.is_completed) {
           return false;
         }
       }
@@ -201,7 +201,7 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     setEditingId: (id: string | number | null) => dispatch(setEditingTaskId(id)),
     setEditedTask: (task: Task | null) => dispatch(setEditedTask(task)),
     setTagFilter: (filter: string) => dispatch(setTagFilter(filter)),
-    setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setStatusFilter(filter)),
+    setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setTaskStatusFilter(filter)),
     setEditedTaskTags: (tags: string[]) => dispatch(setEditedTaskTags(tags)),
     setAddTagInputValue: (value: string) => dispatch(setAddTagInputValue(value)),
     setNewTagInput: (value: string) => dispatch(setNewTagInput(value)),

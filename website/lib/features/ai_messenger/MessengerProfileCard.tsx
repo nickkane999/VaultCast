@@ -26,6 +26,7 @@ export default function MessengerProfileCard({
   question,
   onQuestionChange,
   aiResponse,
+  loading = false,
 }: MessengerProfileCardProps) {
   return (
     <Card sx={{ width: "100%", mt: 3 }} className={styles.cardContainer}>
@@ -84,13 +85,41 @@ export default function MessengerProfileCard({
             </Typography>
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1">Ask a Question:</Typography>
-              <TextField label="Your Question" fullWidth margin="normal" value={question} onChange={(e) => onQuestionChange(e.target.value)} />
-              <Button variant="outlined" sx={{ mt: 1 }} onClick={() => onSendClick(question)} disabled={!question.trim()}>
-                Send
+              <TextField
+                label="Your Question"
+                fullWidth
+                margin="normal"
+                value={question}
+                onChange={(e) => onQuestionChange(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && question.trim()) {
+                    e.preventDefault();
+                    onSendClick(question);
+                  }
+                }}
+                multiline
+                rows={2}
+              />
+              <Button
+                variant="outlined"
+                sx={{ mt: 1 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSendClick(question);
+                }}
+                disabled={!question.trim() || loading}
+                type="button"
+              >
+                {" "}
+                {loading ? "Sending..." : "Send"}{" "}
               </Button>
               <Box sx={{ mt: 2, border: "1px dashed grey", p: 2 }}>
-                <Typography variant="body2">AI Response:</Typography>
-                <Typography variant="body1">{aiResponse}</Typography>
+                {" "}
+                <Typography variant="body2">AI Response:</Typography>{" "}
+                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                  {" "}
+                  {loading && !aiResponse ? "Thinking..." : aiResponse || "Ask a question to get started!"}{" "}
+                </Typography>{" "}
               </Box>
             </Box>
           </Box>

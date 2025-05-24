@@ -23,6 +23,7 @@ export interface MessengerProfileCardProps {
   question: string;
   onQuestionChange: (question: string) => void;
   aiResponse: string;
+  loading?: boolean;
 }
 
 export interface MessengerProfileListProps {
@@ -38,4 +39,10 @@ export interface ProfileFormProps {
   availableFiles: string[];
   mode: "create" | "edit";
   onCancel?: () => void;
+  name: string;
+  systemPrompt: string;
+  selectedFiles: string[];
+  onNameChange: (name: string) => void;
+  onSystemPromptChange: (prompt: string) => void;
+  onSelectedFilesChange: (files: string[]) => void;
 }

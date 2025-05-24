@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import { CommonDecision } from "../../app/features/decision_helper/types";
-import { addDecision, updateDecision, deleteDecision } from "../../app/features/decision_helper/queries/decision_queries";
+import { CommonDecision } from "../../lib/features/decision_helper/types";
+import { addDecision, updateDecision, deleteDecision } from "../../lib/features/decision_helper/queries/decision_queries";
 
 interface CommonDecisionsState {
   commonDecisions: CommonDecision[];

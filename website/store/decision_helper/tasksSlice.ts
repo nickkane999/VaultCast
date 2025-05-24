@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import { Task } from "../../app/features/decision_helper/types";
-import { addTask, updateTask, deleteTask } from "../../app/features/decision_helper/queries/task_queries";
+import { Task } from "../../lib/features/decision_helper/types";
+import { addTask, updateTask, deleteTask } from "../../lib/features/decision_helper/queries/task_queries";
 
 export interface TaskFormState {
   name: string;
@@ -44,7 +44,7 @@ const initialState: TasksState = {
   editedTaskTags: [],
   taskDecisions: {},
   tagFilter: "All",
-  statusFilter: "Not Completed",
+  statusFilter: "All",
   availableTags: [],
   addTagInputValue: "",
   newTagInput: "",
@@ -176,7 +176,7 @@ const tasksSlice = createSlice({
     setTagFilter: (state, action: PayloadAction<string>) => {
       state.tagFilter = action.payload;
     },
-    setStatusFilter: (state, action: PayloadAction<"All" | "Completed" | "Not Completed">) => {
+    setTaskStatusFilter: (state, action: PayloadAction<"All" | "Completed" | "Not Completed">) => {
       state.statusFilter = action.payload;
     },
     setAvailableTags: (state, action: PayloadAction<string[]>) => {
@@ -254,8 +254,25 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setTasks, clearTasksError, setTaskShowForm, setNewTask, updateNewTask, setEditingTaskId, setEditedTask, updateEditedTask, setEditedTaskTags, setTaskDecision, setTagFilter, setStatusFilter, setAvailableTags, setAddTagInputValue, setNewTagInput, setTaskNotification, setProjectFilter } =
-  tasksSlice.actions;
+export const {
+  setTasks,
+  clearTasksError,
+  setTaskShowForm,
+  setNewTask,
+  updateNewTask,
+  setEditingTaskId,
+  setEditedTask,
+  updateEditedTask,
+  setEditedTaskTags,
+  setTaskDecision,
+  setTagFilter,
+  setTaskStatusFilter,
+  setAvailableTags,
+  setAddTagInputValue,
+  setNewTagInput,
+  setTaskNotification,
+  setProjectFilter,
+} = tasksSlice.actions;
 
 export default tasksSlice.reducer;
 export type { TasksState };

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Container, Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import GmailAuthComponent from "../../features/admin/GmailAuthComponent";
+import GmailAuthComponent from "@/lib/features/admin/GmailAuthComponent";
 
 export default function AdminPage() {
   const [selectedSection, setSelectedSection] = useState("gmail_refresh_token");
