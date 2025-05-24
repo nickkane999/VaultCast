@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setEventShowForm, setNewEvent, updateNewEvent, setEditingEventId, setEditedEvent, updateEditedEvent, setEventDecision, setDateFilter, setSortOrder, setHidePastDates, createEvent, updateEventThunk, deleteEventThunk } from "@/store/decision_helper";
+import { setEventShowForm, setNewEvent, updateNewEvent, setEditingEventId, setEditedEvent, updateEditedEvent, setEventDecision, setDateFilter, createEvent, updateEventThunk, deleteEventThunk } from "@/store/decision_helper";
+import { setSortOrder, setHidePastDates } from "@/store/decision_helper/eventsSlice";
 import { Event, CommonDecision, Task } from "../types";
 import { getFilteredAndSortedEvents } from "../util/event_filter";
 
@@ -78,7 +79,11 @@ export const useEventListClient = ({ initialEvents }: UseEventListClientProps) =
     dispatch(createEvent(newEvent));
   };
 
-  const displayedEvents = getFilteredAndSortedEvents(calendarEvents, dateFilter, sortOrder, hidePastDates);
+  // Use initialEvents if calendarEvents is empty, otherwise use calendarEvents
+  const sourceEvents = calendarEvents.length > 0 ? calendarEvents : initialEvents;
+
+  // Create a mutable copy before filtering and sorting
+  const displayedEvents = getFilteredAndSortedEvents([...sourceEvents], dateFilter, sortOrder, hidePastDates);
 
   return {
     events: calendarEvents,

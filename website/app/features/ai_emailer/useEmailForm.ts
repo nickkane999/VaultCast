@@ -59,7 +59,7 @@ export function useEmailFormHandlers() {
 
   const handleActionChange = (actionType: "Draft" | "Send" | "Update") => {
     dispatch(setAction(actionType));
-    if (actionType !== "Draft") {
+    if (actionType !== "Draft" && actionType !== "Send") {
       dispatch(setEmailTitle(""));
       dispatch(setQuestion(""));
     }

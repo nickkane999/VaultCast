@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import styles from "../page.module.css";
+import styles from "@/app/page.module.css";
 
 const CONTENT_SERVER_URL = "http://localhost:3001";
 

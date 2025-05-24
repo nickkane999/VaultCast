@@ -1,5 +1,5 @@
 import styles from "./page.module.css";
-import MediaDisplay from "./components/MediaDisplay";
+import MediaDisplay from "@/lib/components/MediaDisplay";
 
 export default function Home() {
   return (

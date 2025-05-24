@@ -33,7 +33,6 @@ export async function POST(request: Request) {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    // Convert newline characters to HTML break tags to preserve formatting
     const htmlBody = body.replace(/\n/g, "<br>");
 
     const emailLines = [`To: ${to}`, `Subject: ${subject}`, "Content-Type: text/html; charset=utf-8", "", htmlBody];

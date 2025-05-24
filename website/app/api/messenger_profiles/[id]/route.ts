@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCollection } from "@/app/api/mongodb";
+import { getCollection } from "@/lib/server/mongodb";
 import { ObjectId } from "mongodb";
 
 // Helper function to transform MongoDB document to profile format

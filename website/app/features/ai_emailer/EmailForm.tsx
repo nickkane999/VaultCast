@@ -58,8 +58,9 @@ export default function EmailForm() {
 
       {action === "Send" && aiResponse && (
         <>
+          <TextField fullWidth label="Email Subject" value={emailTitle} onChange={(e) => handleEmailTitleChange(e.target.value)} sx={{ mb: 2 }} />
           <TextField fullWidth label="Send To Email Address" value={sendToEmail} onChange={(e) => handleSendToEmailChange(e.target.value)} sx={{ mb: 2 }} type="email" />
-          <Button variant="contained" onClick={handleSendEmail} fullWidth disabled={loading || !sendToEmail} sx={{ mt: 2 }}>
+          <Button variant="contained" onClick={handleSendEmail} fullWidth disabled={loading || !sendToEmail || !emailTitle} sx={{ mt: 2 }}>
             {loading ? <CircularProgress size={24} /> : "Send Email"}
           </Button>
         </>

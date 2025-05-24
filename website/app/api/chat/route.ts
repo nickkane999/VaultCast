@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { askAI } from "../chatgpt";
+import { askAI } from "@/lib/server/chatgpt";
 
 export async function POST(request: Request) {
   try {

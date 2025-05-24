@@ -1,5 +1,5 @@
 import styles from "../page.module.css";
-import VideoPlayer from "../components/VideoPlayer";
+import VideoPlayer from "../../lib/components/VideoPlayer";
 
 export default function Videos() {
   const videoFilename = "John Wick.mp4";

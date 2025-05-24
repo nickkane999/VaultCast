@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { getCollection } from "@/app/api/mongodb";
+import { getCollection } from "@/lib/server/mongodb";
 import { ObjectId, Collection, Document } from "mongodb";
-import { sendEmailViaInternalSender } from "@/app/api/mcp/chatGPTGmail";
+import { sendEmailViaInternalSender } from "./chatgpt_gmail/route";
 
 export async function POST(request: Request) {
   if (!process.env.CHATGPT_API_KEY) {

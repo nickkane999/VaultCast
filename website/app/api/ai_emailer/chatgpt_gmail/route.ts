@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-// Configure your OpenAI client
 const getOpenAIClient = () => {
   if (!process.env.CHATGPT_API_KEY) {
     throw new Error("CHATGPT_API_KEY is not set in the environment variables.");
@@ -9,11 +8,9 @@ const getOpenAIClient = () => {
   return new OpenAI({ apiKey: process.env.CHATGPT_API_KEY });
 };
 
-// Main function to send emails by calling our internal /api/gmail_sender endpoint
 export async function sendEmailViaInternalSender({ to, subject, body }: { to: string; subject: string; body: string }) {
-  // Construct the full URL for the internal API endpoint
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const internalGmailSenderUrl = `${appUrl}/api/gmail_sender`;
+  const internalGmailSenderUrl = `${appUrl}/api/ai_emailer/gmail_sender`;
 
   console.log(`Attempting to call internal Gmail sender at: ${internalGmailSenderUrl}`);
 
@@ -29,7 +26,6 @@ export async function sendEmailViaInternalSender({ to, subject, body }: { to: st
       try {
         errorResult = await response.json();
       } catch (e) {
-        // If parsing JSON fails, use the raw text
         const errorText = await response.text();
         throw new Error(errorText || `Internal Gmail sender request failed: ${response.status} ${response.statusText}`);
       }
@@ -49,12 +45,11 @@ export async function sendEmailViaInternalSender({ to, subject, body }: { to: st
     return {
       success: false,
       message: "Failed to send email via internal sender.",
-      error: error.message || error.toString(), // Ensure error is a string
+      error: error.message || error.toString(),
     };
   }
 }
 
-// API route handler for this /api/mcp/chatGPTGmail.ts endpoint
 export async function POST(request: Request) {
   try {
     const { to, subject, body } = await request.json();
@@ -71,7 +66,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.message, details: result.error }, { status: 500 });
     }
   } catch (error: any) {
-    console.error("Error in MCP/chatGPTGmail API route:", error);
+    console.error("Error in ChatGPT Gmail API route:", error);
     return NextResponse.json({ error: "Internal server error", details: error.message || error }, { status: 500 });
   }
 }
