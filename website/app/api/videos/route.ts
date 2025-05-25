@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
     const runtimeMax = searchParams.get("runtimeMax") ? parseInt(searchParams.get("runtimeMax")!) : null;
     const ratingMin = searchParams.get("ratingMin") ? parseFloat(searchParams.get("ratingMin")!) : null;
     const ratingMax = searchParams.get("ratingMax") ? parseFloat(searchParams.get("ratingMax")!) : null;
+    const searchQuery = searchParams.get("search");
     const sortBy = searchParams.get("sortBy") || "release_date";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
@@ -124,6 +125,18 @@ export async function GET(req: NextRequest) {
         if (ratingMin !== null && rating < ratingMin) return false;
         if (ratingMax !== null && rating > ratingMax) return false;
         return true;
+      });
+    }
+
+    if (searchQuery) {
+      const searchTerms = searchQuery
+        .toLowerCase()
+        .split(" ")
+        .filter((term) => term.length > 0);
+      allVideos = allVideos.filter((video: any) => {
+        const searchableText = [video.title || "", video.description || "", video.filename || "", ...(video.actors || []), ...(video.genres || []), ...(video.keywords || []), video.tagline || ""].join(" ").toLowerCase();
+
+        return searchTerms.every((term) => searchableText.includes(term));
       });
     }
 

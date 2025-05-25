@@ -1,6 +1,22 @@
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, createProject, updateProjectThunk, deleteProjectThunk, setProjectStatusFilter, setSortOrder, setHidePastDates } from "@/store/decision_helper";
+import {
+  setProjectShowForm,
+  setNewProject,
+  updateNewProject,
+  setEditingProjectId,
+  setEditedProject,
+  updateEditedProject,
+  createProject,
+  updateProjectThunk,
+  deleteProjectThunk,
+  setProjectStatusFilter,
+  setSortOrder,
+  setHidePastDates,
+  setProjectCompletionDialogOpen,
+  setProjectCompletionDescription,
+  setCompletingProjectId,
+} from "@/store/decision_helper";
 import { Project } from "../types";
 import { useEffect } from "react";
 
@@ -10,7 +26,7 @@ interface UseProjectListProps {
 
 export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { projects, projectShowForm, newProject, editingProjectId, editedProject, loading, statusFilter, sortOrder, hidePastDates } = useSelector((state: RootState) => state.decisionHelper.projects);
+  const { projects, projectShowForm, newProject, editingProjectId, editedProject, loading, statusFilter, sortOrder, hidePastDates, completionDialogOpen, completionDescription, completingProjectId } = useSelector((state: RootState) => state.decisionHelper.projects);
 
   const getFilteredProjects = () => {
     let filteredProjects = projects.length > 0 ? [...projects] : [...initialProjects];
@@ -77,17 +93,53 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
   };
 
   const handleToggleComplete = (project: Project) => {
-    dispatch(
-      updateProjectThunk({
-        id: project.id,
-        projectData: {
-          name: project.name,
-          description: project.description,
-          dueDate: project.dueDate,
-          is_completed: !project.is_completed,
-        },
-      })
-    );
+    if (!project.is_completed) {
+      dispatch(setCompletingProjectId(project.id.toString()));
+      dispatch(setProjectCompletionDescription(""));
+      dispatch(setProjectCompletionDialogOpen(true));
+    } else {
+      dispatch(
+        updateProjectThunk({
+          id: project.id,
+          projectData: {
+            name: project.name,
+            description: project.description,
+            dueDate: project.dueDate,
+            is_completed: false,
+            complete_description: "",
+          },
+        })
+      );
+    }
+  };
+
+  const handleCompletionSave = async (description: string) => {
+    if (completingProjectId) {
+      const project = projects.find((p) => p.id.toString() === completingProjectId);
+      if (project) {
+        dispatch(
+          updateProjectThunk({
+            id: completingProjectId,
+            projectData: {
+              name: project.name,
+              description: project.description,
+              dueDate: project.dueDate,
+              is_completed: true,
+              complete_description: description,
+            },
+          })
+        );
+      }
+      dispatch(setProjectCompletionDialogOpen(false));
+      dispatch(setCompletingProjectId(null));
+      dispatch(setProjectCompletionDescription(""));
+    }
+  };
+
+  const handleCompletionCancel = () => {
+    dispatch(setProjectCompletionDialogOpen(false));
+    dispatch(setCompletingProjectId(null));
+    dispatch(setProjectCompletionDescription(""));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -135,6 +187,9 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     statusFilter,
     sortOrder,
     hidePastDates,
+    completionDialogOpen,
+    completionDescription,
+    completingProjectId,
     handleAddCard,
     handleFormChange,
     handleEditFormChange,
@@ -143,10 +198,13 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     handleDelete,
     handleEdit,
     handleToggleComplete,
+    handleCompletionSave,
+    handleCompletionCancel,
     setShowForm: (show: boolean) => dispatch(setProjectShowForm(show)),
     setEditingId: (id: string | number | null) => dispatch(setEditingProjectId(id)),
     setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setProjectStatusFilter(filter)),
     setSortOrder: (order: "Ascending" | "Descending") => dispatch(setSortOrder(order)),
     setHidePastDates: (hide: boolean) => dispatch(setHidePastDates(hide)),
+    setCompletionDescription: (description: string) => dispatch(setProjectCompletionDescription(description)),
   };
 };

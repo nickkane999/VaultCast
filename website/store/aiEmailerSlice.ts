@@ -85,6 +85,8 @@ interface AiEmailerState {
   designError: string | null;
   showPreview: boolean;
   selectedCategory: "all" | "marketing" | "newsletter" | "announcement" | "promotional" | "transactional";
+  designMode: "create" | "update";
+  selectedDesignForUpdate: EmailDesign | null;
 
   // Past emails state
   pastEmails: PastEmail[];
@@ -148,6 +150,8 @@ const initialState: AiEmailerState = {
   designError: null,
   showPreview: false,
   selectedCategory: "all",
+  designMode: "create",
+  selectedDesignForUpdate: null,
 
   // Past emails initial state
   pastEmails: [],
@@ -342,6 +346,36 @@ export const saveDesignThunk = createAsyncThunk<
     return data.design;
   } catch (error: any) {
     return rejectWithValue(error.message || "Failed to save design");
+  }
+});
+
+export const updateDesignThunk = createAsyncThunk<
+  EmailDesign,
+  { designId: string; customizations: any },
+  {
+    state: RootState;
+    rejectValue: string;
+  }
+>("aiEmailer/updateDesign", async ({ designId, customizations }, { rejectWithValue }) => {
+  try {
+    const response = await fetch(`/api/ai_emailer/designs/${designId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customizations,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.design;
+  } catch (error: any) {
+    return rejectWithValue(error.message || "Failed to update design");
   }
 });
 
@@ -692,6 +726,15 @@ const aiEmailerSlice = createSlice({
       state.designCustomizations = {};
       state.previewHtml = "";
     },
+    setDesignMode: (state, action: PayloadAction<"create" | "update">) => {
+      state.designMode = action.payload;
+    },
+    setSelectedDesignForUpdate: (state, action: PayloadAction<EmailDesign | null>) => {
+      state.selectedDesignForUpdate = action.payload;
+      if (action.payload) {
+        state.designCustomizations = { ...action.payload.customizations };
+      }
+    },
 
     // Past emails reducers
     setPastEmails: (state, action: PayloadAction<PastEmail[]>) => {
@@ -806,6 +849,22 @@ const aiEmailerSlice = createSlice({
         state.designLoading = false;
         state.designError = (action.payload as string) || "Failed to save design";
       })
+      .addCase(updateDesignThunk.pending, (state) => {
+        state.designLoading = true;
+        state.designError = null;
+      })
+      .addCase(updateDesignThunk.fulfilled, (state, action: PayloadAction<EmailDesign>) => {
+        state.designLoading = false;
+        const index = state.designs.findIndex((d) => d.id === action.payload.id);
+        if (index !== -1) {
+          state.designs[index] = action.payload;
+        }
+        state.selectedDesignForUpdate = action.payload;
+      })
+      .addCase(updateDesignThunk.rejected, (state, action) => {
+        state.designLoading = false;
+        state.designError = (action.payload as string) || "Failed to update design";
+      })
       .addCase(generatePreviewThunk.pending, (state) => {
         state.designLoading = true;
         state.designError = null;
@@ -918,6 +977,8 @@ export const {
   setSelectedCategory,
   clearSelectedTemplate,
   clearSelectedDesign,
+  setDesignMode,
+  setSelectedDesignForUpdate,
   setPastEmails,
   setSelectedPastEmail,
   setPastEmailsLoading,

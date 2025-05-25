@@ -15,6 +15,9 @@ import {
   setNewTagInput,
   setTaskNotification,
   setProjectFilter,
+  setTaskCompletionDialogOpen,
+  setTaskCompletionDescription,
+  setCompletingTaskId,
   createTask,
   updateTaskThunk,
   deleteTaskThunk,
@@ -29,7 +32,9 @@ interface UseTaskListClientProps {
 
 export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskListClientProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { tasks, taskShowForm, newTask, editingTaskId, editedTask, editedTaskTags, taskDecisions, tagFilter, statusFilter, availableTags, addTagInputValue, newTagInput, taskNotification, projectFilter, loading } = useSelector((state: RootState) => state.decisionHelper.tasks);
+  const { tasks, taskShowForm, newTask, editingTaskId, editedTask, editedTaskTags, taskDecisions, tagFilter, statusFilter, availableTags, addTagInputValue, newTagInput, taskNotification, projectFilter, loading, completionDialogOpen, completionDescription, completingTaskId } = useSelector(
+    (state: RootState) => state.decisionHelper.tasks
+  );
   const { projects } = useSelector((state: RootState) => state.decisionHelper.projects);
 
   const handleAddTaskCard = () => {
@@ -106,13 +111,46 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
 
   const handleToggleComplete = async (item: Task) => {
     if (item.id) {
-      dispatch(
-        updateTaskThunk({
-          id: item.id,
-          taskData: { name: item.name, is_completed: !item.is_completed },
-        })
-      );
+      if (!item.is_completed) {
+        dispatch(setCompletingTaskId(item.id.toString()));
+        dispatch(setTaskCompletionDescription(""));
+        dispatch(setTaskCompletionDialogOpen(true));
+      } else {
+        dispatch(
+          updateTaskThunk({
+            id: item.id,
+            taskData: { name: item.name, is_completed: false, complete_description: "" },
+          })
+        );
+      }
     }
+  };
+
+  const handleCompletionSave = async (description: string) => {
+    if (completingTaskId) {
+      const task = tasks.find((t) => t.id.toString() === completingTaskId);
+      if (task) {
+        dispatch(
+          updateTaskThunk({
+            id: completingTaskId,
+            taskData: {
+              name: task.name,
+              is_completed: true,
+              complete_description: description,
+            },
+          })
+        );
+      }
+      dispatch(setTaskCompletionDialogOpen(false));
+      dispatch(setCompletingTaskId(null));
+      dispatch(setTaskCompletionDescription(""));
+    }
+  };
+
+  const handleCompletionCancel = () => {
+    dispatch(setTaskCompletionDialogOpen(false));
+    dispatch(setCompletingTaskId(null));
+    dispatch(setTaskCompletionDescription(""));
   };
 
   const handleDecision = (id: string | number) => {
@@ -180,6 +218,9 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     newTagInput,
     notification: taskNotification,
     projectFilter,
+    completionDialogOpen,
+    completionDescription,
+    completingTaskId,
     handleAddTaskCard,
     handleFormChange,
     handleProjectChange,
@@ -196,6 +237,8 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     handleAddTag,
     handleTagChange,
     handleProjectFilterChange,
+    handleCompletionSave,
+    handleCompletionCancel,
     setShowForm: (value: boolean) => dispatch(setTaskShowForm(value)),
     setNewTask: (task: { name: string; is_completed: boolean; tags: string[]; projectId?: string | undefined }) => dispatch(setNewTask(task)),
     setEditingId: (id: string | number | null) => dispatch(setEditingTaskId(id)),
@@ -206,5 +249,6 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     setAddTagInputValue: (value: string) => dispatch(setAddTagInputValue(value)),
     setNewTagInput: (value: string) => dispatch(setNewTagInput(value)),
     setNotification: (notification: { message: string; type: "success" | "error" | null } | null) => dispatch(setTaskNotification(notification)),
+    setCompletionDescription: (description: string) => dispatch(setTaskCompletionDescription(description)),
   };
 };

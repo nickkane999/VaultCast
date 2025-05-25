@@ -8,6 +8,7 @@ export interface TaskFormState {
   is_completed: boolean;
   tags: string[];
   projectId?: string | undefined;
+  complete_description?: string;
 }
 
 interface TasksState {
@@ -29,6 +30,11 @@ interface TasksState {
   newTagInput: string;
   taskNotification: { message: string; type: "success" | "error" | null } | null;
   projectFilter: string | "All";
+
+  // Completion dialog state
+  completionDialogOpen: boolean;
+  completionDescription: string;
+  completingTaskId: string | null;
 }
 
 const initialState: TasksState = {
@@ -44,12 +50,17 @@ const initialState: TasksState = {
   editedTaskTags: [],
   taskDecisions: {},
   tagFilter: "All",
-  statusFilter: "All",
+  statusFilter: "Not Completed",
   availableTags: [],
   addTagInputValue: "",
   newTagInput: "",
   taskNotification: null,
   projectFilter: "All",
+
+  // Completion dialog initial state
+  completionDialogOpen: false,
+  completionDescription: "",
+  completingTaskId: null,
 };
 
 // Async Thunks for tasks
@@ -194,6 +205,17 @@ const tasksSlice = createSlice({
     setProjectFilter: (state, action: PayloadAction<string | "All">) => {
       state.projectFilter = action.payload;
     },
+
+    // Completion dialog actions
+    setTaskCompletionDialogOpen: (state, action: PayloadAction<boolean>) => {
+      state.completionDialogOpen = action.payload;
+    },
+    setTaskCompletionDescription: (state, action: PayloadAction<string>) => {
+      state.completionDescription = action.payload;
+    },
+    setCompletingTaskId: (state, action: PayloadAction<string | null>) => {
+      state.completingTaskId = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -272,6 +294,9 @@ export const {
   setNewTagInput,
   setTaskNotification,
   setProjectFilter,
+  setTaskCompletionDialogOpen,
+  setTaskCompletionDescription,
+  setCompletingTaskId,
 } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

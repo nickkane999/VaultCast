@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useTransition, useState } from "react";
-import { Container, Typography, Button, Box, Pagination, FormControl, InputLabel, Select, MenuItem, Alert, CircularProgress } from "@mui/material";
+import { Container, Typography, Button, Box, Pagination, FormControl, InputLabel, Select, MenuItem, Alert, CircularProgress, TextField, IconButton } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { Provider, useDispatch } from "react-redux";
 import { store } from "@/store/store";
 import { setVideos } from "@/store/videosSlice";
@@ -27,6 +28,7 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
   const dispatch = useDispatch();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState<string>("");
 
   const {
     videos,
@@ -38,6 +40,7 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     genreFilter,
     runtimeFilter,
     ratingFilter,
+    searchQuery,
     sortBy,
     sortOrder,
     loading,
@@ -54,6 +57,7 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     handleGenreFilterChange,
     handleRuntimeFilterChange,
     handleRatingFilterChange,
+    handleSearchQueryChange,
     handleFilterChange,
     handleBatchFilterUpdate,
     handleClearFilters,
@@ -71,6 +75,10 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     console.log("Initializing Videos with data:", initialData);
     dispatch(setVideos(initialData.videos));
   }, [dispatch, initialData]);
+
+  useEffect(() => {
+    setSearchInput(searchQuery || "");
+  }, [searchQuery]);
 
   const handleRefresh = () => {
     startTransition(async () => {
@@ -95,6 +103,17 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
   };
 
   const editingVideo = editingVideoId ? videos.find((v) => v.id === editingVideoId) || undefined : undefined;
+
+  const handleSearchSubmit = () => {
+    const trimmedSearch = searchInput.trim();
+    handleSearchQueryChange(trimmedSearch || null);
+  };
+
+  const handleSearchKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter") {
+      handleSearchSubmit();
+    }
+  };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -152,6 +171,13 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
             <MenuItem value="rank-asc">Lowest Rated</MenuItem>
           </Select>
         </FormControl>
+
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <TextField size="small" placeholder="Search videos..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyPress={handleSearchKeyPress} sx={{ minWidth: 200 }} />
+          <IconButton onClick={handleSearchSubmit} color="primary" size="small">
+            <SearchIcon />
+          </IconButton>
+        </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
           {totalVideos} videos total

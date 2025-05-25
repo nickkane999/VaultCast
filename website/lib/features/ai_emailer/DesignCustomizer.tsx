@@ -1,20 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, TextField, Typography, Grid, Button, Card, CardContent, Divider, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, TextField, Typography, Button, Grid, Card, CardContent, Divider, CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import CompletionDialog from "@/lib/components/CompletionDialog";
 import { Edit, Preview, Save, Palette, ExpandMore, Image, Link, Title, Description } from "@mui/icons-material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { setDesignCustomizations, generatePreviewThunk, saveDesignThunk, setShowPreview } from "@/store/aiEmailerSlice";
+import { setDesignCustomizations, generatePreviewThunk, saveDesignThunk, updateDesignThunk, setShowPreview } from "@/store/aiEmailerSlice";
 import type { EmailTemplate } from "@/store/aiEmailerSlice";
 
 interface DesignCustomizerProps {
   template: EmailTemplate;
+  isUpdateMode?: boolean;
+  onUpdateSuccess?: () => void;
 }
 
-export default function DesignCustomizer({ template }: DesignCustomizerProps) {
+export default function DesignCustomizer({ template, isUpdateMode = false, onUpdateSuccess }: DesignCustomizerProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { designCustomizations, previewHtml, designLoading, designError, showPreview } = useSelector((state: RootState) => state.aiEmailer);
+  const { designCustomizations, previewHtml, designLoading, designError, showPreview, selectedDesignForUpdate } = useSelector((state: RootState) => state.aiEmailer);
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [designName, setDesignName] = useState("");
@@ -33,13 +36,13 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
     dispatch(setShowPreview(true));
   };
 
-  const handleSave = async () => {
-    if (!designName.trim()) return;
+  const handleSave = async (name: string) => {
+    if (!name.trim()) return;
 
     try {
       await dispatch(
         saveDesignThunk({
-          name: designName,
+          name: name,
           templateId: template.id,
           customizations: designCustomizations,
         })
@@ -49,6 +52,25 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
       setDesignName("");
     } catch (error) {
       console.error("Failed to save design:", error);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedDesignForUpdate) return;
+
+    try {
+      await dispatch(
+        updateDesignThunk({
+          designId: selectedDesignForUpdate.id,
+          customizations: designCustomizations,
+        })
+      ).unwrap();
+
+      if (onUpdateSuccess) {
+        onUpdateSuccess();
+      }
+    } catch (error) {
+      console.error("Failed to update design:", error);
     }
   };
 
@@ -95,7 +117,7 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
     const isColor = fieldType === "color";
 
     return (
-      <Grid item xs={12} sm={isColor ? 6 : 12} key={field}>
+      <Grid size={{ xs: 12, sm: isColor ? 6 : 12 }} key={field}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
           {getFieldIcon(field)}
           <Typography variant="subtitle2">{getFieldLabel(field)}</Typography>
@@ -130,9 +152,15 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
           <Button variant="outlined" startIcon={<Preview />} onClick={handlePreview} disabled={designLoading}>
             Preview
           </Button>
-          <Button variant="contained" startIcon={<Save />} onClick={() => setSaveDialogOpen(true)} disabled={designLoading}>
-            Save Design
-          </Button>
+          {isUpdateMode ? (
+            <Button variant="contained" startIcon={<Save />} onClick={handleUpdate} disabled={designLoading}>
+              Update Design
+            </Button>
+          ) : (
+            <Button variant="contained" startIcon={<Save />} onClick={() => setSaveDialogOpen(true)} disabled={designLoading}>
+              Save Design
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -143,7 +171,7 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
       )}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Accordion defaultExpanded>
@@ -193,7 +221,7 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ height: "fit-content", minHeight: 400 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -223,8 +251,6 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
                       border: "none",
                       transform: "scale(0.8)",
                       transformOrigin: "top left",
-                      width: "125%",
-                      height: "625px",
                     }}
                     title="Email Preview"
                   />
@@ -252,18 +278,7 @@ export default function DesignCustomizer({ template }: DesignCustomizerProps) {
       </Grid>
 
       {/* Save Dialog */}
-      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Save Email Design</DialogTitle>
-        <DialogContent>
-          <TextField autoFocus margin="dense" label="Design Name" fullWidth variant="outlined" value={designName} onChange={(e) => setDesignName(e.target.value)} placeholder="Enter a name for your design" />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disabled={!designName.trim() || designLoading}>
-            {designLoading ? <CircularProgress size={20} /> : "Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CompletionDialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} onSave={handleSave} title="Save Email Design" value={designName} loading={designLoading} label="Design Name" placeholder="Enter a name for your design" multiline={false} disabled={!designName.trim()} />
     </Box>
   );
 }

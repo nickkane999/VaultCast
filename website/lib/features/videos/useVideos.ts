@@ -11,6 +11,7 @@ import {
   setGenreFilter,
   setRuntimeFilter,
   setRatingFilter,
+  setSearchQuery,
   setSortBy,
   setSortOrder,
   setShowCreateForm,
@@ -29,7 +30,7 @@ export const useVideos = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const { videos, currentPage, videosPerPage, totalVideos, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter, sortBy, sortOrder, loading, error, showCreateForm, editingVideoId, editForm } = useSelector((state: RootState) => state.videos);
+  const { videos, currentPage, videosPerPage, totalVideos, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter, searchQuery, sortBy, sortOrder, loading, error, showCreateForm, editingVideoId, editForm } = useSelector((state: RootState) => state.videos);
 
   const totalPages = Math.ceil(totalVideos / videosPerPage);
 
@@ -43,6 +44,7 @@ export const useVideos = () => {
     const urlRuntimeMax = searchParams.get("runtimeMax") ? parseInt(searchParams.get("runtimeMax")!) : null;
     const urlRatingMin = searchParams.get("ratingMin") ? parseFloat(searchParams.get("ratingMin")!) : null;
     const urlRatingMax = searchParams.get("ratingMax") ? parseFloat(searchParams.get("ratingMax")!) : null;
+    const urlSearchQuery = searchParams.get("search");
     const urlSortBy = (searchParams.get("sortBy") as "rank" | "release_date") || "release_date";
     const urlSortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
@@ -55,6 +57,7 @@ export const useVideos = () => {
       runtimeMax: urlRuntimeMax,
       ratingMin: urlRatingMin,
       ratingMax: urlRatingMax,
+      searchQuery: urlSearchQuery,
       sortBy: urlSortBy,
       sortOrder: urlSortOrder,
     };
@@ -62,7 +65,19 @@ export const useVideos = () => {
 
   // Update URL with current filter state
   const updateURL = useCallback(
-    (newParams: { page?: number; yearFilter?: string | null; actorFilter?: string[] | null; genreFilter?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; sortBy?: string; sortOrder?: string }) => {
+    (newParams: {
+      page?: number;
+      yearFilter?: string | null;
+      actorFilter?: string[] | null;
+      genreFilter?: string[] | null;
+      runtimeMin?: number | null;
+      runtimeMax?: number | null;
+      ratingMin?: number | null;
+      ratingMax?: number | null;
+      searchQuery?: string | null;
+      sortBy?: string;
+      sortOrder?: string;
+    }) => {
       const params = new URLSearchParams(searchParams);
 
       // Update or remove parameters - map internal names to URL parameter names
@@ -70,6 +85,7 @@ export const useVideos = () => {
         yearFilter: "year",
         actorFilter: "actor",
         genreFilter: "genre",
+        searchQuery: "search",
       };
 
       Object.entries(newParams).forEach(([key, value]) => {
@@ -89,7 +105,7 @@ export const useVideos = () => {
       });
 
       // Always ensure page is set to 1 when filters change (except when explicitly setting page)
-      if (!("page" in newParams) && ("yearFilter" in newParams || "actorFilter" in newParams || "genreFilter" in newParams || "runtimeMin" in newParams || "runtimeMax" in newParams || "ratingMin" in newParams || "ratingMax" in newParams)) {
+      if (!("page" in newParams) && ("yearFilter" in newParams || "actorFilter" in newParams || "genreFilter" in newParams || "runtimeMin" in newParams || "runtimeMax" in newParams || "ratingMin" in newParams || "ratingMax" in newParams || "searchQuery" in newParams)) {
         params.set("page", "1");
       }
 
@@ -114,6 +130,7 @@ export const useVideos = () => {
         runtimeMax: urlFilters.runtimeMax || undefined,
         ratingMin: urlFilters.ratingMin || undefined,
         ratingMax: urlFilters.ratingMax || undefined,
+        searchQuery: urlFilters.searchQuery || undefined,
         sortBy: urlFilters.sortBy,
         sortOrder: urlFilters.sortOrder,
       })
@@ -126,6 +143,7 @@ export const useVideos = () => {
     dispatch(setGenreFilter(urlFilters.genreFilter));
     dispatch(setRuntimeFilter({ min: urlFilters.runtimeMin, max: urlFilters.runtimeMax }));
     dispatch(setRatingFilter({ min: urlFilters.ratingMin, max: urlFilters.ratingMax }));
+    dispatch(setSearchQuery(urlFilters.searchQuery));
     dispatch(setSortBy(urlFilters.sortBy));
     dispatch(setSortOrder(urlFilters.sortOrder));
   }, [dispatch, getFiltersFromURL, videosPerPage]);
@@ -159,6 +177,10 @@ export const useVideos = () => {
     updateURL({ ratingMin: min, ratingMax: max });
   };
 
+  const handleSearchQueryChange = (query: string | null) => {
+    updateURL({ searchQuery: query });
+  };
+
   const handleFilterChange = (filterType: string, value: any) => {
     switch (filterType) {
       case "year":
@@ -182,10 +204,13 @@ export const useVideos = () => {
       case "ratingMax":
         updateURL({ ratingMax: value });
         break;
+      case "search":
+        updateURL({ searchQuery: value });
+        break;
     }
   };
 
-  const handleBatchFilterUpdate = (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => {
+  const handleBatchFilterUpdate = (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; searchQuery?: string | null }) => {
     updateURL({
       yearFilter: filters.year,
       actorFilter: filters.actor,
@@ -194,6 +219,7 @@ export const useVideos = () => {
       runtimeMax: filters.runtimeMax,
       ratingMin: filters.ratingMin,
       ratingMax: filters.ratingMax,
+      searchQuery: filters.searchQuery,
     });
   };
 
@@ -206,6 +232,7 @@ export const useVideos = () => {
       runtimeMax: null,
       ratingMin: null,
       ratingMax: null,
+      searchQuery: null,
     });
   };
 
@@ -333,6 +360,7 @@ export const useVideos = () => {
     genreFilter,
     runtimeFilter,
     ratingFilter,
+    searchQuery,
     sortBy,
     sortOrder,
     loading,
@@ -349,6 +377,7 @@ export const useVideos = () => {
     handleGenreFilterChange,
     handleRuntimeFilterChange,
     handleRatingFilterChange,
+    handleSearchQueryChange,
     handleFilterChange,
     handleBatchFilterUpdate,
     handleClearFilters,

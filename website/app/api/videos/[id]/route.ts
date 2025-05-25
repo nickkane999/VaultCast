@@ -27,6 +27,7 @@ function transformVideoRecord(doc: any) {
     vote_count: doc.vote_count,
     tmdb_id: doc.tmdb_id,
     imdb_id: doc.imdb_id,
+    trailer_url: doc.trailer_url,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

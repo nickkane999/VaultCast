@@ -18,12 +18,14 @@ export interface Task extends Decision {
   is_completed: boolean;
   tags?: string[];
   projectId?: string; // Reference to a Project
+  complete_description?: string; // Description when task is completed
 }
 
 export interface Project extends Decision {
   description: string;
   dueDate: string; // YYYY-MM-DD format
   is_completed: boolean;
+  complete_description?: string; // Description when project is completed
 }
 
 // Import Essential from the essentials slice instead of defining it here

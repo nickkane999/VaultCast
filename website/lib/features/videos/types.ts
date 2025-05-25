@@ -102,6 +102,7 @@ export interface VideoListState {
   genreFilter: string[] | null;
   runtimeFilter: { min: number | null; max: number | null };
   ratingFilter: { min: number | null; max: number | null };
+  searchQuery: string | null;
   sortBy: "rank" | "release_date";
   sortOrder: "asc" | "desc";
   loading: boolean;

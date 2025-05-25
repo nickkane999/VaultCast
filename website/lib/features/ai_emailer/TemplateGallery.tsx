@@ -78,7 +78,7 @@ export default function TemplateGallery({ templates, loading, error }: TemplateG
 
       <Grid container spacing={3}>
         {filteredTemplates.map((template) => (
-          <Grid item xs={12} sm={6} md={4} key={template.id}>
+          <Grid component="div" key={template.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               sx={{
                 height: "100%",

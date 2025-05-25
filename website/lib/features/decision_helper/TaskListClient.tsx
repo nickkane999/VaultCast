@@ -9,6 +9,7 @@ import Chip from "@mui/material/Chip";
 import { useTaskListClient } from "./hooks/useTaskListClient";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import CompletionDialog from "@/lib/components/CompletionDialog";
 
 export default function TaskListClient({ initialTasks = [], initialProjects = [] }: { initialTasks: Task[]; initialProjects: Project[] }) {
   const {
@@ -28,6 +29,9 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     newTagInput,
     notification,
     projectFilter,
+    completionDialogOpen,
+    completionDescription,
+    completingTaskId,
     handleAddTaskCard,
     handleFormChange,
     handleProjectChange,
@@ -43,6 +47,8 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     handleAddTag,
     handleTagChange,
     handleProjectFilterChange,
+    handleCompletionSave,
+    handleCompletionCancel,
     setShowForm,
     setNewTask,
     setEditingId,
@@ -53,6 +59,7 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     setAddTagInputValue,
     setNewTagInput,
     setNotification,
+    setCompletionDescription,
   } = useTaskListClient({ initialTasks, initialProjects });
 
   const handleCloseNotification = () => {
@@ -237,6 +244,8 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
           {notification?.message}
         </Alert>
       </Snackbar>
+
+      <CompletionDialog open={completionDialogOpen} onClose={handleCompletionCancel} onSave={handleCompletionSave} title="Complete Task" value={completionDescription} loading={loading} />
     </Box>
   );
 }

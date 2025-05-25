@@ -5,6 +5,7 @@ import CardComponent from "./CardComponent";
 import { Project, Task } from "./types";
 import styles from "./DecisionHelper.module.css";
 import { useProjectList } from "./hooks/useProjectList";
+import CompletionDialog from "@/lib/components/CompletionDialog";
 
 export default function ProjectListClient({ initialProjects = [] }: { initialProjects: Project[] }) {
   const {
@@ -17,6 +18,9 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
     statusFilter,
     sortOrder,
     hidePastDates,
+    completionDialogOpen,
+    completionDescription,
+    completingProjectId,
     handleAddCard,
     handleFormChange,
     handleEditFormChange,
@@ -25,11 +29,14 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
     handleDelete,
     handleEdit,
     handleToggleComplete,
+    handleCompletionSave,
+    handleCompletionCancel,
     setShowForm,
     setEditingId,
     setStatusFilter,
     setSortOrder,
     setHidePastDates,
+    setCompletionDescription,
   } = useProjectList({
     initialProjects,
   });
@@ -103,6 +110,8 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
           )
         )}
       </Box>
+
+      <CompletionDialog open={completionDialogOpen} onClose={handleCompletionCancel} onSave={handleCompletionSave} title="Complete Project" value={completionDescription} loading={loading} />
     </Box>
   );
 }

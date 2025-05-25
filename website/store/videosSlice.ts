@@ -22,6 +22,7 @@ const initialState: VideosState = {
   genreFilter: null,
   runtimeFilter: { min: null, max: null },
   ratingFilter: { min: null, max: null },
+  searchQuery: null,
   sortBy: "release_date",
   sortOrder: "desc",
   loading: false,
@@ -49,11 +50,12 @@ export const fetchVideos = createAsyncThunk(
       runtimeMax?: number;
       ratingMin?: number;
       ratingMax?: number;
+      searchQuery?: string;
       sortBy?: string;
       sortOrder?: string;
     } = {}
   ) => {
-    const { page = 1, limit = 12, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, sortBy = "release_date", sortOrder = "desc" } = params;
+    const { page = 1, limit = 12, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, searchQuery, sortBy = "release_date", sortOrder = "desc" } = params;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const searchParams = new URLSearchParams({
@@ -76,6 +78,7 @@ export const fetchVideos = createAsyncThunk(
     if (runtimeMax !== undefined && runtimeMax !== null) searchParams.append("runtimeMax", runtimeMax.toString());
     if (ratingMin !== undefined && ratingMin !== null) searchParams.append("ratingMin", ratingMin.toString());
     if (ratingMax !== undefined && ratingMax !== null) searchParams.append("ratingMax", ratingMax.toString());
+    if (searchQuery) searchParams.append("search", searchQuery);
 
     const response = await fetch(`${baseUrl}/api/videos?${searchParams}`);
     if (!response.ok) {
@@ -161,6 +164,10 @@ const videosSlice = createSlice({
     },
     setRatingFilter: (state, action: PayloadAction<{ min: number | null; max: number | null }>) => {
       state.ratingFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setSearchQuery: (state, action: PayloadAction<string | null>) => {
+      state.searchQuery = action.payload;
       state.currentPage = 1;
     },
     setSortBy: (state, action: PayloadAction<"rank" | "release_date">) => {
@@ -255,6 +262,6 @@ const videosSlice = createSlice({
   },
 });
 
-export const { setVideos, setCurrentPage, setYearFilter, setActorFilter, setGenreFilter, setRuntimeFilter, setRatingFilter, setSortBy, setSortOrder, setShowCreateForm, setEditingVideoId, updateEditForm, clearEditForm, setError } = videosSlice.actions;
+export const { setVideos, setCurrentPage, setYearFilter, setActorFilter, setGenreFilter, setRuntimeFilter, setRatingFilter, setSearchQuery, setSortBy, setSortOrder, setShowCreateForm, setEditingVideoId, updateEditForm, clearEditForm, setError } = videosSlice.actions;
 
 export default videosSlice.reducer;

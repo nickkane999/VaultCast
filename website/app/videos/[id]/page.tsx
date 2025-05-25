@@ -1,7 +1,8 @@
 import { Container, Typography, Card, CardContent, Rating, Box, Chip, Button, Avatar, Stack } from "@mui/material";
-import { ArrowBack, AccessTime, Star, Language, Business, PlayArrow } from "@mui/icons-material";
+import { ArrowBack, AccessTime, Star, Language, Business } from "@mui/icons-material";
 import Link from "next/link";
 import VideoPlayer from "@/lib/components/VideoPlayer";
+import TrailerButton from "@/lib/components/TrailerButton";
 
 async function getVideoRecord(id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -9,10 +10,13 @@ async function getVideoRecord(id: string) {
     const response = await fetch(`${baseUrl}/api/videos/${id}`, {
       next: { revalidate: 300 },
     });
+
     if (!response.ok) {
       return null;
     }
-    return response.json();
+
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error fetching video record:", error);
     return null;
@@ -136,9 +140,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ id
 
             {videoRecord.trailer_url && (
               <Box sx={{ mb: 3 }}>
-                <Button variant="contained" color="secondary" startIcon={<PlayArrow />} onClick={() => window.open(videoRecord.trailer_url, "_blank", "noopener,noreferrer")} size="large">
-                  Watch Trailer
-                </Button>
+                <TrailerButton trailerUrl={videoRecord.trailer_url} />
               </Box>
             )}
           </Box>

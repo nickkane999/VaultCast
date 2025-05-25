@@ -28,6 +28,14 @@ export default function ProjectCard({ item, onToggleComplete }: ProjectCardProps
       ) : null}
 
       {item.is_completed !== undefined && <FormControlLabel control={<Checkbox checked={item.is_completed} onChange={() => onToggleComplete && onToggleComplete(item)} />} label="Completed" />}
+
+      {item.is_completed && item.complete_description && (
+        <Box sx={{ mt: 1, p: 1, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+            Completion Notes: {item.complete_description}
+          </Typography>
+        </Box>
+      )}
     </CardContent>
   );
 }

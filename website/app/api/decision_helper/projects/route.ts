@@ -4,18 +4,22 @@ import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
 
 function isValidRequest(body: any, id?: string | null) {
-  const { name, description, dueDate } = body;
+  const { name, description, dueDate, complete_description } = body;
   const notValidEntry = (id !== undefined && !id) || !name || description === undefined || dueDate === undefined;
+  const invalidCompleteDescription = complete_description !== undefined && typeof complete_description !== "string";
 
   if (notValidEntry) {
     return { error: "ID (for PUT), name, description, and dueDate are required" };
+  }
+  if (invalidCompleteDescription) {
+    return { error: "'complete_description' must be a string if provided" };
   }
   // Optional: Add date format validation for dueDate if necessary
 
   return null; // Request is valid
 }
 
-async function updateProject(id: string, updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean }) {
+async function updateProject(id: string, updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean; complete_description?: string }) {
   const collection = await getCollection("projects");
   const objectId = new ObjectId(id);
   const result = await collection.updateOne({ _id: objectId }, { $set: updateData });
@@ -35,6 +39,7 @@ export async function GET() {
     description: p.description,
     dueDate: p.dueDate,
     is_completed: p.is_completed || false,
+    complete_description: p.complete_description,
   }));
   return NextResponse.json(result);
 }
@@ -45,8 +50,9 @@ export async function POST(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, description, dueDate, is_completed = false } = body;
+  const { name, description, dueDate, is_completed = false, complete_description } = body;
   const doc: any = { name, description, dueDate, is_completed };
+  if (complete_description !== undefined) doc.complete_description = complete_description;
 
   const collection = await getCollection("projects");
   const res = await collection.insertOne(doc);
@@ -61,6 +67,7 @@ export async function POST(req: NextRequest) {
       description: insertedProject?.description,
       dueDate: insertedProject?.dueDate,
       is_completed: insertedProject?.is_completed || false,
+      complete_description: insertedProject?.complete_description,
     },
     { status: 201 }
   );
@@ -91,12 +98,13 @@ export async function PUT(req: NextRequest) {
   if (validationError) {
     return NextResponse.json(validationError, { status: 400 });
   }
-  const { name, description, dueDate, is_completed } = body;
-  const updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean } = {};
+  const { name, description, dueDate, is_completed, complete_description } = body;
+  const updateData: { name?: string; description?: string; dueDate?: string; is_completed?: boolean; complete_description?: string } = {};
   if (name !== undefined) updateData.name = name;
   if (description !== undefined) updateData.description = description;
   if (dueDate !== undefined) updateData.dueDate = dueDate;
   if (is_completed !== undefined) updateData.is_completed = is_completed;
+  if (complete_description !== undefined) updateData.complete_description = complete_description;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields provided for update" }, { status: 400 });
@@ -116,6 +124,7 @@ export async function PUT(req: NextRequest) {
       description: updatedProject.description,
       dueDate: updatedProject.dueDate,
       is_completed: updatedProject.is_completed || false,
+      complete_description: updatedProject.complete_description,
     },
     { status: 200 }
   );

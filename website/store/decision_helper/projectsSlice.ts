@@ -8,6 +8,7 @@ interface ProjectFormState {
   description: string;
   dueDate: string;
   is_completed: boolean;
+  complete_description?: string;
 }
 
 interface ProjectsState {
@@ -25,6 +26,11 @@ interface ProjectsState {
   statusFilter: "All" | "Completed" | "Not Completed";
   sortOrder: "Ascending" | "Descending";
   hidePastDates: boolean;
+
+  // Completion dialog state
+  completionDialogOpen: boolean;
+  completionDescription: string;
+  completingProjectId: string | null;
 }
 
 const initialState: ProjectsState = {
@@ -42,6 +48,11 @@ const initialState: ProjectsState = {
   statusFilter: "Not Completed",
   sortOrder: "Ascending",
   hidePastDates: true,
+
+  // Completion dialog initial state
+  completionDialogOpen: false,
+  completionDescription: "",
+  completingProjectId: null,
 };
 
 // Async Thunks for projects
@@ -162,6 +173,17 @@ const projectsSlice = createSlice({
     setHidePastDates: (state, action: PayloadAction<boolean>) => {
       state.hidePastDates = action.payload;
     },
+
+    // Completion dialog actions
+    setProjectCompletionDialogOpen: (state, action: PayloadAction<boolean>) => {
+      state.completionDialogOpen = action.payload;
+    },
+    setProjectCompletionDescription: (state, action: PayloadAction<string>) => {
+      state.completionDescription = action.payload;
+    },
+    setCompletingProjectId: (state, action: PayloadAction<string | null>) => {
+      state.completingProjectId = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -207,7 +229,22 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { setProjects, clearProjectsError, setProjectShowForm, setNewProject, updateNewProject, setEditingProjectId, setEditedProject, updateEditedProject, setProjectStatusFilter, setSortOrder, setHidePastDates } = projectsSlice.actions;
+export const {
+  setProjects,
+  clearProjectsError,
+  setProjectShowForm,
+  setNewProject,
+  updateNewProject,
+  setEditingProjectId,
+  setEditedProject,
+  updateEditedProject,
+  setProjectStatusFilter,
+  setSortOrder,
+  setHidePastDates,
+  setProjectCompletionDialogOpen,
+  setProjectCompletionDescription,
+  setCompletingProjectId,
+} = projectsSlice.actions;
 
 export default projectsSlice.reducer;
 export type { ProjectsState, ProjectFormState };
