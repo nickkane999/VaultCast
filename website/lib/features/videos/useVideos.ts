@@ -65,12 +65,20 @@ export const useVideos = () => {
     (newParams: { page?: number; yearFilter?: string | null; actorFilter?: string | null; genreFilter?: string | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; sortBy?: string; sortOrder?: string }) => {
       const params = new URLSearchParams(searchParams);
 
-      // Update or remove parameters
+      // Update or remove parameters - map internal names to URL parameter names
+      const urlParamMap: Record<string, string> = {
+        yearFilter: "year",
+        actorFilter: "actor",
+        genreFilter: "genre",
+      };
+
       Object.entries(newParams).forEach(([key, value]) => {
+        const urlParamName = urlParamMap[key] || key;
+
         if (value === null || value === undefined || value === "") {
-          params.delete(key);
-        } else {
-          params.set(key, value.toString());
+          params.delete(urlParamName);
+        } else if (typeof value === "number" || value !== "") {
+          params.set(urlParamName, value.toString());
         }
       });
 

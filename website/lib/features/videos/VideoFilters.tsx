@@ -40,7 +40,7 @@ interface RatingRange {
 }
 
 const runtimeRanges: RuntimeRange[] = [
-  { label: "All Durations", min: null, max: null, value: "" },
+  { label: "All", min: null, max: null, value: "All" },
   { label: "Short (0-30 min)", min: 0, max: 30, value: "short" },
   { label: "Medium (30-60 min)", min: 30, max: 60, value: "medium" },
   { label: "Long (60-120 min)", min: 60, max: 120, value: "long" },
@@ -48,7 +48,7 @@ const runtimeRanges: RuntimeRange[] = [
 ];
 
 const ratingRanges: RatingRange[] = [
-  { label: "All Ratings", min: null, max: null, value: "" },
+  { label: "All", min: null, max: null, value: "All" },
   { label: "Bad (0-5)", min: 0, max: 5, value: "bad" },
   { label: "Ok (5-7)", min: 5, max: 7, value: "ok" },
   { label: "Good (7-9)", min: 7, max: 9, value: "good" },
@@ -64,20 +64,26 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     const urlYear = searchParams.get("year");
     const urlActor = searchParams.get("actor");
     const urlGenre = searchParams.get("genre");
-    const urlRuntimeMin = searchParams.get("runtimeMin") ? parseInt(searchParams.get("runtimeMin")!) : null;
-    const urlRuntimeMax = searchParams.get("runtimeMax") ? parseInt(searchParams.get("runtimeMax")!) : null;
-    const urlRatingMin = searchParams.get("ratingMin") ? parseFloat(searchParams.get("ratingMin")!) : null;
-    const urlRatingMax = searchParams.get("ratingMax") ? parseFloat(searchParams.get("ratingMax")!) : null;
+    const urlRuntimeMin = searchParams.get("runtimeMin");
+    const urlRuntimeMax = searchParams.get("runtimeMax");
+    const urlRatingMin = searchParams.get("ratingMin");
+    const urlRatingMax = searchParams.get("ratingMax");
 
-    const currentRuntimeRange = runtimeRanges.find((range) => range.min === urlRuntimeMin && range.max === urlRuntimeMax);
-    const currentRatingRange = ratingRanges.find((range) => range.min === urlRatingMin && range.max === urlRatingMax);
+    // 'arse runtime values, treating null/undefined a' null, bu' preserving 0 as valid
+    const runtimeMin = urlRuntimeMin !== null ? parseInt(urlRuntimeMin) : null;
+    const runtimeMax = urlRuntimeMax !== null ? parseInt(urlRuntimeMax) : null;
+    const ratingMin = urlRatingMin !== null ? parseFloat(urlRatingMin) : null;
+    const ratingMax = urlRatingMax !== null ? parseFloat(urlRatingMax) : null;
+
+    const currentRuntimeRange = runtimeRanges.find((range) => range.min === runtimeMin && range.max === runtimeMax);
+    const currentRatingRange = ratingRanges.find((range) => range.min === ratingMin && range.max === ratingMax);
 
     return {
-      year: urlYear,
-      actor: urlActor,
-      genre: urlGenre,
-      runtime: currentRuntimeRange?.value || "",
-      rating: currentRatingRange?.value || "",
+      year: urlYear || "All",
+      actor: urlActor || "All",
+      genre: urlGenre || "All",
+      runtime: currentRuntimeRange?.value || "All",
+      rating: currentRatingRange?.value || "All",
     };
   };
 
@@ -93,7 +99,16 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
 
   const hasLocalChanges = () => {
     const urlFilters = getCurrentURLFilters();
-    return localFilters.year !== urlFilters.year || localFilters.actor !== urlFilters.actor || localFilters.genre !== urlFilters.genre || localFilters.runtime !== urlFilters.runtime || localFilters.rating !== urlFilters.rating;
+
+    const localYear = localFilters.year === "" || localFilters.year === "All" ? null : localFilters.year;
+    const localActor = localFilters.actor === "" || localFilters.actor === "All" ? null : localFilters.actor;
+    const localGenre = localFilters.genre === "" || localFilters.genre === "All" ? null : localFilters.genre;
+
+    const urlYear = urlFilters.year === "All" ? null : urlFilters.year;
+    const urlActor = urlFilters.actor === "All" ? null : urlFilters.actor;
+    const urlGenre = urlFilters.genre === "All" ? null : urlFilters.genre;
+
+    return localYear !== urlYear || localActor !== urlActor || localGenre !== urlGenre || localFilters.runtime !== urlFilters.runtime || localFilters.rating !== urlFilters.rating;
   };
 
   const handleLocalFilterChange = (filterType: string, value: any) => {
@@ -105,21 +120,21 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     const selectedRatingRange = ratingRanges.find((range) => range.value === localFilters.rating);
 
     onBatchFilterUpdate({
-      year: localFilters.year || null,
-      actor: localFilters.actor || null,
-      genre: localFilters.genre || null,
-      runtimeMin: selectedRuntimeRange?.min || null,
-      runtimeMax: selectedRuntimeRange?.max || null,
-      ratingMin: selectedRatingRange?.min || null,
-      ratingMax: selectedRatingRange?.max || null,
+      year: localFilters.year === "" || localFilters.year === "All" ? null : localFilters.year,
+      actor: localFilters.actor === "" || localFilters.actor === "All" ? null : localFilters.actor,
+      genre: localFilters.genre === "" || localFilters.genre === "All" ? null : localFilters.genre,
+      runtimeMin: selectedRuntimeRange?.min ?? null,
+      runtimeMax: selectedRuntimeRange?.max ?? null,
+      ratingMin: selectedRatingRange?.min ?? null,
+      ratingMax: selectedRatingRange?.max ?? null,
     });
   };
 
   const handleClearLocalFilters = () => {
     setLocalFilters({
-      year: null,
-      actor: null,
-      genre: null,
+      year: "",
+      actor: "",
+      genre: "",
       runtime: "",
       rating: "",
     });
@@ -161,8 +176,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
             >
               <FormControl fullWidth size="small">
                 <InputLabel>Year</InputLabel>
-                <Select value={localFilters.year || ""} onChange={(e) => handleLocalFilterChange("year", e.target.value || null)} label="Year">
-                  <MenuItem value="">All Years</MenuItem>
+                <Select value={localFilters.year || "All Years"} onChange={(e) => handleLocalFilterChange("year", e.target.value || null)} label="Year">
+                  <MenuItem value="All">All</MenuItem>
                   {filterOptions.years.map((year) => (
                     <MenuItem key={year} value={year}>
                       {year}
@@ -174,7 +189,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
               <FormControl fullWidth size="small">
                 <InputLabel>Actor</InputLabel>
                 <Select value={localFilters.actor || ""} onChange={(e) => handleLocalFilterChange("actor", e.target.value || null)} label="Actor">
-                  <MenuItem value="">All Actors</MenuItem>
+                  <MenuItem value="All">All</MenuItem>
                   {filterOptions.actors.map((actor) => (
                     <MenuItem key={actor} value={actor}>
                       {actor}
@@ -186,7 +201,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
               <FormControl fullWidth size="small">
                 <InputLabel>Genre</InputLabel>
                 <Select value={localFilters.genre || ""} onChange={(e) => handleLocalFilterChange("genre", e.target.value || null)} label="Genre">
-                  <MenuItem value="">All Genres</MenuItem>
+                  <MenuItem value="All">All</MenuItem>
                   {filterOptions.genres.map((genre) => (
                     <MenuItem key={genre} value={genre}>
                       {genre}
