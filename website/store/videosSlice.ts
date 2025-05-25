@@ -18,6 +18,10 @@ const initialState: VideosState = {
   videosPerPage: 12,
   totalVideos: 0,
   yearFilter: null,
+  actorFilter: null,
+  genreFilter: null,
+  runtimeFilter: { min: null, max: null },
+  ratingFilter: { min: null, max: null },
   sortBy: "release_date",
   sortOrder: "desc",
   loading: false,
@@ -39,11 +43,17 @@ export const fetchVideos = createAsyncThunk(
       page?: number;
       limit?: number;
       yearFilter?: string;
+      actorFilter?: string;
+      genreFilter?: string;
+      runtimeMin?: number;
+      runtimeMax?: number;
+      ratingMin?: number;
+      ratingMax?: number;
       sortBy?: string;
       sortOrder?: string;
     } = {}
   ) => {
-    const { page = 1, limit = 12, yearFilter, sortBy = "release_date", sortOrder = "desc" } = params;
+    const { page = 1, limit = 12, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, sortBy = "release_date", sortOrder = "desc" } = params;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const searchParams = new URLSearchParams({
@@ -53,9 +63,13 @@ export const fetchVideos = createAsyncThunk(
       sortOrder,
     });
 
-    if (yearFilter) {
-      searchParams.append("year", yearFilter);
-    }
+    if (yearFilter) searchParams.append("year", yearFilter);
+    if (actorFilter) searchParams.append("actor", actorFilter);
+    if (genreFilter) searchParams.append("genre", genreFilter);
+    if (runtimeMin !== undefined && runtimeMin !== null) searchParams.append("runtimeMin", runtimeMin.toString());
+    if (runtimeMax !== undefined && runtimeMax !== null) searchParams.append("runtimeMax", runtimeMax.toString());
+    if (ratingMin !== undefined && ratingMin !== null) searchParams.append("ratingMin", ratingMin.toString());
+    if (ratingMax !== undefined && ratingMax !== null) searchParams.append("ratingMax", ratingMax.toString());
 
     const response = await fetch(`${baseUrl}/api/videos?${searchParams}`);
     if (!response.ok) {
@@ -125,6 +139,22 @@ const videosSlice = createSlice({
     },
     setYearFilter: (state, action: PayloadAction<string | null>) => {
       state.yearFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setActorFilter: (state, action: PayloadAction<string | null>) => {
+      state.actorFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setGenreFilter: (state, action: PayloadAction<string | null>) => {
+      state.genreFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setRuntimeFilter: (state, action: PayloadAction<{ min: number | null; max: number | null }>) => {
+      state.runtimeFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setRatingFilter: (state, action: PayloadAction<{ min: number | null; max: number | null }>) => {
+      state.ratingFilter = action.payload;
       state.currentPage = 1;
     },
     setSortBy: (state, action: PayloadAction<"rank" | "release_date">) => {
@@ -219,6 +249,6 @@ const videosSlice = createSlice({
   },
 });
 
-export const { setVideos, setCurrentPage, setYearFilter, setSortBy, setSortOrder, setShowCreateForm, setEditingVideoId, updateEditForm, clearEditForm, setError } = videosSlice.actions;
+export const { setVideos, setCurrentPage, setYearFilter, setActorFilter, setGenreFilter, setRuntimeFilter, setRatingFilter, setSortBy, setSortOrder, setShowCreateForm, setEditingVideoId, updateEditForm, clearEditForm, setError } = videosSlice.actions;
 
 export default videosSlice.reducer;

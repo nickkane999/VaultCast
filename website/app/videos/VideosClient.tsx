@@ -8,6 +8,7 @@ import { setVideos } from "@/store/videosSlice";
 import { useVideos } from "@/lib/features/videos/useVideos";
 import VideoCard from "@/lib/features/videos/VideoCard";
 import VideoForm from "@/lib/features/videos/VideoForm";
+import VideoFilters from "@/lib/features/videos/VideoFilters";
 import { VideoRecord } from "@/lib/features/videos/types";
 
 interface VideosData {
@@ -33,6 +34,10 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     totalPages,
     totalVideos,
     yearFilter,
+    actorFilter,
+    genreFilter,
+    runtimeFilter,
+    ratingFilter,
     sortBy,
     sortOrder,
     loading,
@@ -41,9 +46,17 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     editingVideoId,
     editForm,
     availableYears,
+    filterOptions,
     handleFetchVideos,
     handlePageChange,
     handleYearFilterChange,
+    handleActorFilterChange,
+    handleGenreFilterChange,
+    handleRuntimeFilterChange,
+    handleRatingFilterChange,
+    handleFilterChange,
+    handleBatchFilterUpdate,
+    handleClearFilters,
     handleSortChange,
     handleShowCreateForm,
     handleEditVideo,
@@ -102,22 +115,26 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
         </Alert>
       )}
 
+      <VideoFilters
+        filters={{
+          year: yearFilter,
+          actor: actorFilter,
+          genre: genreFilter,
+          runtimeMin: runtimeFilter.min,
+          runtimeMax: runtimeFilter.max,
+          ratingMin: ratingFilter.min,
+          ratingMax: ratingFilter.max,
+        }}
+        filterOptions={filterOptions}
+        onFilterChange={handleFilterChange}
+        onBatchFilterUpdate={handleBatchFilterUpdate}
+        onClearFilters={handleClearFilters}
+      />
+
       <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
         <Button variant="outlined" onClick={handleRefresh} disabled={isPending || loading}>
           {isPending || loading ? "Loading..." : "Refresh"}
         </Button>
-
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Year</InputLabel>
-          <Select value={yearFilter || ""} label="Year" onChange={(e) => handleYearFilterChange(e.target.value || null)}>
-            <MenuItem value="">All Years</MenuItem>
-            {availableYears.map((year) => (
-              <MenuItem key={year} value={year.toString()}>
-                {year}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Sort By</InputLabel>

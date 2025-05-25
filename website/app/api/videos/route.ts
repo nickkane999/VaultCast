@@ -11,6 +11,22 @@ function transformVideoRecord(doc: any) {
     description: doc.description,
     score: doc.score,
     release_date: doc.release_date,
+    tagline: doc.tagline,
+    runtime: doc.runtime,
+    genres: doc.genres,
+    cast: doc.cast,
+    actors: doc.actors,
+    keywords: doc.keywords,
+    poster_path: doc.poster_path,
+    backdrop_path: doc.backdrop_path,
+    production_companies: doc.production_companies,
+    production_countries: doc.production_countries,
+    spoken_languages: doc.spoken_languages,
+    status: doc.status,
+    vote_average: doc.vote_average,
+    vote_count: doc.vote_count,
+    tmdb_id: doc.tmdb_id,
+    imdb_id: doc.imdb_id,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -37,6 +53,12 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
     const yearFilter = searchParams.get("year");
+    const actorFilter = searchParams.get("actor");
+    const genreFilter = searchParams.get("genre");
+    const runtimeMin = searchParams.get("runtimeMin") ? parseInt(searchParams.get("runtimeMin")!) : null;
+    const runtimeMax = searchParams.get("runtimeMax") ? parseInt(searchParams.get("runtimeMax")!) : null;
+    const ratingMin = searchParams.get("ratingMin") ? parseFloat(searchParams.get("ratingMin")!) : null;
+    const ratingMax = searchParams.get("ratingMax") ? parseFloat(searchParams.get("ratingMax")!) : null;
     const sortBy = searchParams.get("sortBy") || "release_date";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
@@ -61,11 +83,44 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    // Apply filters
     if (yearFilter) {
       allVideos = allVideos.filter((video: any) => {
         if (!video.release_date) return false;
         const videoYear = new Date(video.release_date).getFullYear().toString();
         return videoYear === yearFilter;
+      });
+    }
+
+    if (actorFilter) {
+      allVideos = allVideos.filter((video: any) => {
+        return video.actors && video.actors.some((actor: string) => actor.toLowerCase().includes(actorFilter.toLowerCase()));
+      });
+    }
+
+    if (genreFilter) {
+      allVideos = allVideos.filter((video: any) => {
+        return video.genres && video.genres.some((genre: string) => genre.toLowerCase().includes(genreFilter.toLowerCase()));
+      });
+    }
+
+    if (runtimeMin !== null || runtimeMax !== null) {
+      allVideos = allVideos.filter((video: any) => {
+        if (!video.runtime) return false;
+        const runtime = video.runtime;
+        if (runtimeMin !== null && runtime < runtimeMin) return false;
+        if (runtimeMax !== null && runtime > runtimeMax) return false;
+        return true;
+      });
+    }
+
+    if (ratingMin !== null || ratingMax !== null) {
+      allVideos = allVideos.filter((video: any) => {
+        if (video.score === undefined) return false;
+        const rating = video.score;
+        if (ratingMin !== null && rating < ratingMin) return false;
+        if (ratingMax !== null && rating > ratingMax) return false;
+        return true;
       });
     }
 
@@ -91,11 +146,28 @@ export async function GET(req: NextRequest) {
     const endIndex = startIndex + limit;
     const paginatedVideos = allVideos.slice(startIndex, endIndex);
 
+    // Get unique values for filter dropdowns
+    const allActors = new Set<string>();
+    const allGenres = new Set<string>();
+
+    videoRecords.forEach((record) => {
+      if (record.actors) {
+        record.actors.forEach((actor: string) => allActors.add(actor));
+      }
+      if (record.genres) {
+        record.genres.forEach((genre: string) => allGenres.add(genre));
+      }
+    });
+
     return NextResponse.json({
       videos: paginatedVideos,
       totalVideos: allVideos.length,
       currentPage: page,
       totalPages: Math.ceil(allVideos.length / limit),
+      filterOptions: {
+        actors: Array.from(allActors).sort(),
+        genres: Array.from(allGenres).sort(),
+      },
     });
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -108,7 +180,7 @@ export async function POST(req: NextRequest) {
     const videoData = await req.json();
 
     if (!videoData.filename || !videoData.title || !videoData.description || videoData.score === undefined || !videoData.release_date) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+      return NextResponse.json({ error: "All required fields (filename, title, description, score, release_date) are required" }, { status: 400 });
     }
 
     const collection = await getCollection("videos");
@@ -124,6 +196,22 @@ export async function POST(req: NextRequest) {
       description: videoData.description,
       score: Number(videoData.score),
       release_date: videoData.release_date,
+      tagline: videoData.tagline || null,
+      runtime: videoData.runtime ? Number(videoData.runtime) : null,
+      genres: videoData.genres || [],
+      cast: videoData.cast || [],
+      actors: videoData.actors || [],
+      keywords: videoData.keywords || [],
+      poster_path: videoData.poster_path || null,
+      backdrop_path: videoData.backdrop_path || null,
+      production_companies: videoData.production_companies || [],
+      production_countries: videoData.production_countries || [],
+      spoken_languages: videoData.spoken_languages || [],
+      status: videoData.status || null,
+      vote_average: videoData.vote_average ? Number(videoData.vote_average) : null,
+      vote_count: videoData.vote_count ? Number(videoData.vote_count) : null,
+      tmdb_id: videoData.tmdb_id ? Number(videoData.tmdb_id) : null,
+      imdb_id: videoData.imdb_id || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

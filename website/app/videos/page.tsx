@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { fetchVideosData } from "@/lib/features/videos/util/page_cache";
+import { Suspense } from "react";
 import VideosClient from "./VideosClient";
 
 export default async function VideosPage() {
@@ -10,5 +11,9 @@ export default async function VideosPage() {
     revalidatePath("/videos");
   };
 
-  return <VideosClient initialData={data} refreshAction={refreshAction} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VideosClient initialData={data} refreshAction={refreshAction} />
+    </Suspense>
+  );
 }

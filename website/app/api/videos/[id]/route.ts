@@ -11,6 +11,22 @@ function transformVideoRecord(doc: any) {
     description: doc.description,
     score: doc.score,
     release_date: doc.release_date,
+    tagline: doc.tagline,
+    runtime: doc.runtime,
+    genres: doc.genres,
+    cast: doc.cast,
+    actors: doc.actors,
+    keywords: doc.keywords,
+    poster_path: doc.poster_path,
+    backdrop_path: doc.backdrop_path,
+    production_companies: doc.production_companies,
+    production_countries: doc.production_countries,
+    spoken_languages: doc.spoken_languages,
+    status: doc.status,
+    vote_average: doc.vote_average,
+    vote_count: doc.vote_count,
+    tmdb_id: doc.tmdb_id,
+    imdb_id: doc.imdb_id,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -48,7 +64,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     if (!updateData.title || !updateData.description || updateData.score === undefined || !updateData.release_date) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+      return NextResponse.json({ error: "All required fields (title, description, score, release_date) are required" }, { status: 400 });
     }
 
     const collection = await getCollection("videos");
@@ -60,6 +76,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           description: updateData.description,
           score: Number(updateData.score),
           release_date: updateData.release_date,
+          tagline: updateData.tagline || null,
+          runtime: updateData.runtime ? Number(updateData.runtime) : null,
+          genres: updateData.genres || [],
+          cast: updateData.cast || [],
+          actors: updateData.actors || [],
+          keywords: updateData.keywords || [],
+          poster_path: updateData.poster_path || null,
+          backdrop_path: updateData.backdrop_path || null,
+          production_companies: updateData.production_companies || [],
+          production_countries: updateData.production_countries || [],
+          spoken_languages: updateData.spoken_languages || [],
+          status: updateData.status || null,
+          vote_average: updateData.vote_average ? Number(updateData.vote_average) : null,
+          vote_count: updateData.vote_count ? Number(updateData.vote_count) : null,
+          tmdb_id: updateData.tmdb_id ? Number(updateData.tmdb_id) : null,
+          imdb_id: updateData.imdb_id || null,
           updatedAt: new Date(),
         },
       }
