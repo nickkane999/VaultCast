@@ -49,8 +49,8 @@ export const useVideos = () => {
     return {
       page: urlPage,
       yearFilter: urlYear,
-      actorFilter: urlActor,
-      genreFilter: urlGenre,
+      actorFilter: urlActor ? urlActor.split(",").map((actor) => actor.trim()) : null,
+      genreFilter: urlGenre ? urlGenre.split(",").map((genre) => genre.trim()) : null,
       runtimeMin: urlRuntimeMin,
       runtimeMax: urlRuntimeMax,
       ratingMin: urlRatingMin,
@@ -62,7 +62,7 @@ export const useVideos = () => {
 
   // Update URL with current filter state
   const updateURL = useCallback(
-    (newParams: { page?: number; yearFilter?: string | null; actorFilter?: string | null; genreFilter?: string | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; sortBy?: string; sortOrder?: string }) => {
+    (newParams: { page?: number; yearFilter?: string | null; actorFilter?: string[] | null; genreFilter?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; sortBy?: string; sortOrder?: string }) => {
       const params = new URLSearchParams(searchParams);
 
       // Update or remove parameters - map internal names to URL parameter names
@@ -77,6 +77,12 @@ export const useVideos = () => {
 
         if (value === null || value === undefined || value === "") {
           params.delete(urlParamName);
+        } else if (Array.isArray(value)) {
+          if (value.length > 0) {
+            params.set(urlParamName, value.join(","));
+          } else {
+            params.delete(urlParamName);
+          }
         } else if (typeof value === "number" || value !== "") {
           params.set(urlParamName, value.toString());
         }
@@ -138,11 +144,11 @@ export const useVideos = () => {
   };
 
   const handleActorFilterChange = (actor: string | null) => {
-    updateURL({ actorFilter: actor });
+    updateURL({ actorFilter: actor ? [actor] : null });
   };
 
   const handleGenreFilterChange = (genre: string | null) => {
-    updateURL({ genreFilter: genre });
+    updateURL({ genreFilter: genre ? [genre] : null });
   };
 
   const handleRuntimeFilterChange = (min: number | null, max: number | null) => {
@@ -159,10 +165,10 @@ export const useVideos = () => {
         updateURL({ yearFilter: value });
         break;
       case "actor":
-        updateURL({ actorFilter: value });
+        updateURL({ actorFilter: value ? value.map((actor: string) => actor.trim()) : null });
         break;
       case "genre":
-        updateURL({ genreFilter: value });
+        updateURL({ genreFilter: value ? value.map((genre: string) => genre.trim()) : null });
         break;
       case "runtimeMin":
         updateURL({ runtimeMin: value });
@@ -179,7 +185,7 @@ export const useVideos = () => {
     }
   };
 
-  const handleBatchFilterUpdate = (filters: { year?: string | null; actor?: string | null; genre?: string | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => {
+  const handleBatchFilterUpdate = (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => {
     updateURL({
       yearFilter: filters.year,
       actorFilter: filters.actor,

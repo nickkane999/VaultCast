@@ -43,8 +43,8 @@ export const fetchVideos = createAsyncThunk(
       page?: number;
       limit?: number;
       yearFilter?: string;
-      actorFilter?: string;
-      genreFilter?: string;
+      actorFilter?: string[] | string;
+      genreFilter?: string[] | string;
       runtimeMin?: number;
       runtimeMax?: number;
       ratingMin?: number;
@@ -64,8 +64,14 @@ export const fetchVideos = createAsyncThunk(
     });
 
     if (yearFilter) searchParams.append("year", yearFilter);
-    if (actorFilter) searchParams.append("actor", actorFilter);
-    if (genreFilter) searchParams.append("genre", genreFilter);
+    if (actorFilter) {
+      const actorString = Array.isArray(actorFilter) ? actorFilter.join(",") : actorFilter;
+      searchParams.append("actor", actorString);
+    }
+    if (genreFilter) {
+      const genreString = Array.isArray(genreFilter) ? genreFilter.join(",") : genreFilter;
+      searchParams.append("genre", genreString);
+    }
     if (runtimeMin !== undefined && runtimeMin !== null) searchParams.append("runtimeMin", runtimeMin.toString());
     if (runtimeMax !== undefined && runtimeMax !== null) searchParams.append("runtimeMax", runtimeMax.toString());
     if (ratingMin !== undefined && ratingMin !== null) searchParams.append("ratingMin", ratingMin.toString());
@@ -141,11 +147,11 @@ const videosSlice = createSlice({
       state.yearFilter = action.payload;
       state.currentPage = 1;
     },
-    setActorFilter: (state, action: PayloadAction<string | null>) => {
+    setActorFilter: (state, action: PayloadAction<string[] | null>) => {
       state.actorFilter = action.payload;
       state.currentPage = 1;
     },
-    setGenreFilter: (state, action: PayloadAction<string | null>) => {
+    setGenreFilter: (state, action: PayloadAction<string[] | null>) => {
       state.genreFilter = action.payload;
       state.currentPage = 1;
     },

@@ -93,14 +93,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (actorFilter) {
+      const selectedActors = actorFilter.split(",").map((actor) => actor.trim());
       allVideos = allVideos.filter((video: any) => {
-        return video.actors && video.actors.some((actor: string) => actor.toLowerCase().includes(actorFilter.toLowerCase()));
+        return video.actors && selectedActors.some((selectedActor) => video.actors.some((actor: string) => actor.toLowerCase().includes(selectedActor.toLowerCase())));
       });
     }
 
     if (genreFilter) {
+      const selectedGenres = genreFilter.split(",").map((genre) => genre.trim());
       allVideos = allVideos.filter((video: any) => {
-        return video.genres && video.genres.some((genre: string) => genre.toLowerCase().includes(genreFilter.toLowerCase()));
+        return video.genres && selectedGenres.some((selectedGenre) => video.genres.some((genre: string) => genre.toLowerCase().includes(selectedGenre.toLowerCase())));
       });
     }
 

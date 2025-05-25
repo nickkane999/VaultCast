@@ -8,8 +8,8 @@ import { useSearchParams } from "next/navigation";
 interface VideoFiltersProps {
   filters: {
     year: string | null;
-    actor: string | null;
-    genre: string | null;
+    actor: string[] | null;
+    genre: string[] | null;
     runtimeMin: number | null;
     runtimeMax: number | null;
     ratingMin: number | null;
@@ -21,7 +21,7 @@ interface VideoFiltersProps {
     years: string[];
   };
   onFilterChange: (filterType: string, value: any) => void;
-  onBatchFilterUpdate: (filters: { year?: string | null; actor?: string | null; genre?: string | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => void;
+  onBatchFilterUpdate: (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => void;
   onClearFilters: () => void;
 }
 
@@ -80,8 +80,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
 
     return {
       year: urlYear || "All",
-      actor: urlActor || "All",
-      genre: urlGenre || "All",
+      actor: urlActor ? urlActor.split(",") : null,
+      genre: urlGenre ? urlGenre.split(",") : null,
       runtime: currentRuntimeRange?.value || "All",
       rating: currentRatingRange?.value || "All",
     };
@@ -94,19 +94,26 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     setLocalFilters(getCurrentURLFilters());
   }, [searchParams]);
 
-  const hasActiveFilters = Object.values(filters).some((value) => value !== null && value !== "");
-  const activeFiltersCount = Object.values(filters).filter((value) => value !== null && value !== "").length;
+  const hasActiveFilters = filters.year !== null || (filters.actor !== null && filters.actor.length > 0) || (filters.genre !== null && filters.genre.length > 0) || filters.runtimeMin !== null || filters.runtimeMax !== null || filters.ratingMin !== null || filters.ratingMax !== null;
+
+  const activeFiltersCount = [
+    filters.year,
+    filters.actor && filters.actor.length > 0 ? filters.actor : null,
+    filters.genre && filters.genre.length > 0 ? filters.genre : null,
+    filters.runtimeMin !== null || filters.runtimeMax !== null ? "runtime" : null,
+    filters.ratingMin !== null || filters.ratingMax !== null ? "rating" : null,
+  ].filter(Boolean).length;
 
   const hasLocalChanges = () => {
     const urlFilters = getCurrentURLFilters();
 
     const localYear = localFilters.year === "" || localFilters.year === "All" ? null : localFilters.year;
-    const localActor = localFilters.actor === "" || localFilters.actor === "All" ? null : localFilters.actor;
-    const localGenre = localFilters.genre === "" || localFilters.genre === "All" ? null : localFilters.genre;
+    const localActor = localFilters.actor ? localFilters.actor.join(",") : null;
+    const localGenre = localFilters.genre ? localFilters.genre.join(",") : null;
 
     const urlYear = urlFilters.year === "All" ? null : urlFilters.year;
-    const urlActor = urlFilters.actor === "All" ? null : urlFilters.actor;
-    const urlGenre = urlFilters.genre === "All" ? null : urlFilters.genre;
+    const urlActor = urlFilters.actor ? urlFilters.actor.join(",") : null;
+    const urlGenre = urlFilters.genre ? urlFilters.genre.join(",") : null;
 
     return localYear !== urlYear || localActor !== urlActor || localGenre !== urlGenre || localFilters.runtime !== urlFilters.runtime || localFilters.rating !== urlFilters.rating;
   };
@@ -121,8 +128,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
 
     onBatchFilterUpdate({
       year: localFilters.year === "" || localFilters.year === "All" ? null : localFilters.year,
-      actor: localFilters.actor === "" || localFilters.actor === "All" ? null : localFilters.actor,
-      genre: localFilters.genre === "" || localFilters.genre === "All" ? null : localFilters.genre,
+      actor: localFilters.actor ? localFilters.actor.map((a) => a) : null,
+      genre: localFilters.genre ? localFilters.genre.map((g) => g) : null,
       runtimeMin: selectedRuntimeRange?.min ?? null,
       runtimeMax: selectedRuntimeRange?.max ?? null,
       ratingMin: selectedRatingRange?.min ?? null,
@@ -133,8 +140,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
   const handleClearLocalFilters = () => {
     setLocalFilters({
       year: "",
-      actor: "",
-      genre: "",
+      actor: null,
+      genre: null,
       runtime: "",
       rating: "",
     });
@@ -187,27 +194,11 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
               </FormControl>
 
               <FormControl fullWidth size="small">
-                <InputLabel>Actor</InputLabel>
-                <Select value={localFilters.actor || ""} onChange={(e) => handleLocalFilterChange("actor", e.target.value || null)} label="Actor">
-                  <MenuItem value="All">All</MenuItem>
-                  {filterOptions.actors.map((actor) => (
-                    <MenuItem key={actor} value={actor}>
-                      {actor}
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Autocomplete multiple value={localFilters.actor || []} onChange={(event, newValue) => handleLocalFilterChange("actor", newValue)} options={filterOptions.actors} renderInput={(params) => <TextField {...params} label="Actor" />} />
               </FormControl>
 
               <FormControl fullWidth size="small">
-                <InputLabel>Genre</InputLabel>
-                <Select value={localFilters.genre || ""} onChange={(e) => handleLocalFilterChange("genre", e.target.value || null)} label="Genre">
-                  <MenuItem value="All">All</MenuItem>
-                  {filterOptions.genres.map((genre) => (
-                    <MenuItem key={genre} value={genre}>
-                      {genre}
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Autocomplete multiple value={localFilters.genre || []} onChange={(event, newValue) => handleLocalFilterChange("genre", newValue)} options={filterOptions.genres} renderInput={(params) => <TextField {...params} label="Genre" />} />
               </FormControl>
 
               <FormControl fullWidth size="small">
@@ -246,8 +237,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {filters.year && <Chip size="small" label={`Year: ${filters.year}`} onDelete={() => onFilterChange("year", null)} color="primary" variant="outlined" />}
-                  {filters.actor && <Chip size="small" label={`Actor: ${filters.actor}`} onDelete={() => onFilterChange("actor", null)} color="primary" variant="outlined" />}
-                  {filters.genre && <Chip size="small" label={`Genre: ${filters.genre}`} onDelete={() => onFilterChange("genre", null)} color="primary" variant="outlined" />}
+                  {filters.actor && <Chip size="small" label={`Actor: ${filters.actor.join(", ")}`} onDelete={() => onFilterChange("actor", null)} color="primary" variant="outlined" />}
+                  {filters.genre && <Chip size="small" label={`Genre: ${filters.genre.join(", ")}`} onDelete={() => onFilterChange("genre", null)} color="primary" variant="outlined" />}
                   {(filters.runtimeMin !== null || filters.runtimeMax !== null) && (
                     <Chip
                       size="small"

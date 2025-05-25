@@ -87,8 +87,8 @@ export interface VideoListState {
   videosPerPage: number;
   totalVideos: number;
   yearFilter: string | null;
-  actorFilter: string | null;
-  genreFilter: string | null;
+  actorFilter: string[] | null;
+  genreFilter: string[] | null;
   runtimeFilter: { min: number | null; max: number | null };
   ratingFilter: { min: number | null; max: number | null };
   sortBy: "rank" | "release_date";
