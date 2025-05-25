@@ -27,6 +27,7 @@ function transformVideoRecord(doc: any) {
     vote_count: doc.vote_count,
     tmdb_id: doc.tmdb_id,
     imdb_id: doc.imdb_id,
+    trailer_url: doc.trailer_url,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -214,6 +215,7 @@ export async function POST(req: NextRequest) {
       vote_count: videoData.vote_count ? Number(videoData.vote_count) : null,
       tmdb_id: videoData.tmdb_id ? Number(videoData.tmdb_id) : null,
       imdb_id: videoData.imdb_id || null,
+      trailer_url: videoData.trailer_url || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

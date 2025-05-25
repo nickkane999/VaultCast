@@ -21,6 +21,7 @@ export interface VideoRecord {
   status?: string;
   vote_average?: number;
   vote_count?: number;
+  trailer_url?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -52,6 +53,7 @@ export interface VideoFormData {
   vote_count?: number;
   tmdb_id?: number;
   imdb_id?: string;
+  trailer_url?: string;
 }
 
 export interface TMDbMovieData {
@@ -77,6 +79,15 @@ export interface TMDbMovieData {
       name: string;
       character: string;
       profile_path: string;
+    }[];
+  };
+  videos: {
+    results: {
+      key: string;
+      name: string;
+      site: string;
+      type: string;
+      official: boolean;
     }[];
   };
 }

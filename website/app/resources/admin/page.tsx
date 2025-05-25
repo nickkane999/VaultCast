@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Container, Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import GmailAuthComponent from "@/lib/features/admin/GmailAuthComponent";
+import BulkVideoUpdateComponent from "@/lib/features/admin/BulkVideoUpdateComponent";
 
 export default function AdminPage() {
   const [selectedSection, setSelectedSection] = useState("gmail_refresh_token");
@@ -22,10 +23,12 @@ export default function AdminPage() {
           <InputLabel id="admin-section-label">Select Admin Task</InputLabel>
           <Select labelId="admin-section-label" id="admin-section-select" value={selectedSection} label="Select Admin Task" onChange={handleSectionChange}>
             <MenuItem value="gmail_refresh_token">Gmail Refresh Token</MenuItem>
+            <MenuItem value="update_videos">Update Videos</MenuItem>
           </Select>
         </FormControl>
 
         {selectedSection === "gmail_refresh_token" && <GmailAuthComponent />}
+        {selectedSection === "update_videos" && <BulkVideoUpdateComponent />}
       </Paper>
     </Container>
   );

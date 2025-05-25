@@ -29,6 +29,7 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
     vote_count: video?.vote_count || 0,
     tmdb_id: video?.tmdb_id || 0,
     imdb_id: video?.imdb_id || "",
+    trailer_url: video?.trailer_url || "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,6 +59,7 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
         vote_count: video.vote_count || 0,
         tmdb_id: video.tmdb_id || 0,
         imdb_id: video.imdb_id || "",
+        trailer_url: video.trailer_url || "",
       });
     }
   }, [video]);
@@ -173,6 +175,8 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
                 sx={{ width: "200px" }}
                 required
               />
+
+              <TextField fullWidth label="Trailer URL" value={formData.trailer_url} onChange={(e) => handleChange("trailer_url", e.target.value)} placeholder="https://www.youtube.com/watch?v=..." helperText="YouTube trailer URL (optional)" />
 
               <Box>
                 <Button variant="text" onClick={() => setShowAdvancedFields(!showAdvancedFields)} startIcon={showAdvancedFields ? <ExpandLess /> : <ExpandMore />} sx={{ mb: 2 }}>

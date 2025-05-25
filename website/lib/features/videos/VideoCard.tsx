@@ -2,10 +2,12 @@
 
 import React from "react";
 import { Card, CardContent, CardActions, Typography, Button, Box, Rating, Chip } from "@mui/material";
+import { PlayArrow } from "@mui/icons-material";
 import { VideoCardProps } from "./types";
 
 export default function VideoCard({ video, onEditClick, onCardClick }: VideoCardProps) {
   const hasInformation = !!(video.title && video.description && video.score !== undefined && video.release_date);
+  const hasTrailer = !!video.trailer_url;
 
   const formatDate = (dateString: string) => {
     try {
@@ -20,6 +22,13 @@ export default function VideoCard({ video, onEditClick, onCardClick }: VideoCard
       return new Date(dateString).getFullYear();
     } catch {
       return null;
+    }
+  };
+
+  const handleTrailerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (video.trailer_url) {
+      window.open(video.trailer_url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -89,7 +98,12 @@ export default function VideoCard({ video, onEditClick, onCardClick }: VideoCard
         )}
       </CardContent>
 
-      <CardActions>
+      <CardActions sx={{ flexDirection: "column", gap: 1, alignItems: "stretch" }}>
+        {hasTrailer && (
+          <Button size="small" variant="contained" color="secondary" startIcon={<PlayArrow />} onClick={handleTrailerClick} fullWidth>
+            Watch Trailer
+          </Button>
+        )}
         <Button
           size="small"
           variant={hasInformation ? "outlined" : "contained"}
@@ -97,6 +111,7 @@ export default function VideoCard({ video, onEditClick, onCardClick }: VideoCard
             e.stopPropagation();
             onEditClick();
           }}
+          fullWidth
         >
           {hasInformation ? "Edit Information" : "Add Information"}
         </Button>

@@ -1,5 +1,5 @@
 import { Container, Typography, Card, CardContent, Rating, Box, Chip, Button, Avatar, Stack } from "@mui/material";
-import { ArrowBack, AccessTime, Star, Language, Business } from "@mui/icons-material";
+import { ArrowBack, AccessTime, Star, Language, Business, PlayArrow } from "@mui/icons-material";
 import Link from "next/link";
 import VideoPlayer from "@/lib/components/VideoPlayer";
 
@@ -131,6 +131,14 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ id
                     <Chip key={index} label={genre} size="small" />
                   ))}
                 </Box>
+              </Box>
+            )}
+
+            {videoRecord.trailer_url && (
+              <Box sx={{ mb: 3 }}>
+                <Button variant="contained" color="secondary" startIcon={<PlayArrow />} onClick={() => window.open(videoRecord.trailer_url, "_blank", "noopener,noreferrer")} size="large">
+                  Watch Trailer
+                </Button>
               </Box>
             )}
           </Box>

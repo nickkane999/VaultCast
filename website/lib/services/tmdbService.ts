@@ -57,7 +57,7 @@ export class TMDbService {
     try {
       console.log("Fetching details for TMDb movie ID:", movieId);
 
-      const [movieResponse, creditsResponse, keywordsResponse] = await Promise.all([
+      const [movieResponse, creditsResponse, keywordsResponse, videosResponse] = await Promise.all([
         axios.get(`${TMDB_BASE_URL}/movie/${movieId}`, {
           headers: this.getAuthHeaders(),
           params: {
@@ -70,6 +70,12 @@ export class TMDbService {
         axios.get(`${TMDB_BASE_URL}/movie/${movieId}/keywords`, {
           headers: this.getAuthHeaders(),
         }),
+        axios.get(`${TMDB_BASE_URL}/movie/${movieId}/videos`, {
+          headers: this.getAuthHeaders(),
+          params: {
+            language: "en-US",
+          },
+        }),
       ]);
 
       console.log("Successfully fetched movie details for:", movieResponse.data.title);
@@ -78,6 +84,7 @@ export class TMDbService {
         ...movieResponse.data,
         credits: creditsResponse.data,
         keywords: keywordsResponse.data,
+        videos: videosResponse.data,
       };
     } catch (error) {
       console.error("Error fetching movie details:", error);
@@ -89,6 +96,14 @@ export class TMDbService {
       }
       throw new Error("Failed to fetch movie details");
     }
+  }
+
+  private getTrailerUrl(videos: any): string | undefined {
+    if (!videos?.results) return undefined;
+
+    const trailer = videos.results.find((video: any) => video.type === "Trailer" && video.site === "YouTube" && video.official === true) || videos.results.find((video: any) => video.type === "Trailer" && video.site === "YouTube");
+
+    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined;
   }
 
   transformToVideoFormData(tmdbData: TMDbMovieData): Partial<VideoFormData> {
@@ -103,12 +118,12 @@ export class TMDbService {
       title: tmdbData.title,
       description: tmdbData.overview,
       release_date: tmdbData.release_date,
-      score: Math.round(tmdbData.vote_average), // Convert 0-10 scale
+      score: Math.round(tmdbData.vote_average),
       tagline: tmdbData.tagline,
       runtime: tmdbData.runtime,
       genres: tmdbData.genres?.map((g) => g.name) || [],
       cast: castData,
-      actors: castData.map((actor) => actor.name), // Just the names for filtering
+      actors: castData.map((actor) => actor.name),
       keywords: tmdbData.keywords?.keywords?.map((k) => k.name) || [],
       poster_path: tmdbData.poster_path,
       backdrop_path: tmdbData.backdrop_path,
@@ -120,6 +135,7 @@ export class TMDbService {
       vote_count: tmdbData.vote_count,
       tmdb_id: tmdbData.id,
       imdb_id: tmdbData.imdb_id,
+      trailer_url: this.getTrailerUrl(tmdbData.videos),
     };
   }
 
