@@ -1,7 +1,33 @@
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { setRequestType, setEmailTitle, setQuestion, setAction, setUpdateRequest, setAiResponse, setSendToEmail, handleSubmitThunk, handleSendEmailThunk } from "@/store/aiEmailerSlice";
+import {
+  setRequestType,
+  setEmailTitle,
+  setQuestion,
+  setAction,
+  setUpdateRequest,
+  setAiResponse,
+  setSendToEmail,
+  handleSubmitThunk,
+  handleSendEmailThunk,
+  setSelectedPastEmail,
+  fetchPastEmailsThunk,
+  loadPastEmailThunk,
+  deletePastEmailThunk,
+  setSelectedDraftDesign,
+  setDraftCustomizations,
+  setUseDesignInDraft,
+  generateEmailWithDesignThunk,
+  fetchDesignsThunk,
+  setSelectedHtmlTemplate,
+  setHtmlDesignCustomizations,
+  setHtmlDesignQuestion,
+  setViewMode,
+  fetchTemplatesForDesignThunk,
+  generateHtmlDesignThunk,
+  setDesignOption,
+} from "@/store/aiEmailerSlice";
 
 interface UseEditAiResponseProps {
   aiResponse: string;
@@ -45,8 +71,13 @@ export function useEditAiResponse({ aiResponse }: UseEditAiResponseProps) {
 export function useEmailFormHandlers() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleRequestTypeChange = (type: "Raw HTML" | "text") => {
+  const handleRequestTypeChange = (type: "Raw HTML" | "text" | "HTML Design") => {
     dispatch(setRequestType(type));
+
+    // Fetch templates when HTML Design is selected
+    if (type === "HTML Design") {
+      dispatch(fetchTemplatesForDesignThunk());
+    }
   };
 
   const handleEmailTitleChange = (title: string) => {
@@ -57,8 +88,22 @@ export function useEmailFormHandlers() {
     dispatch(setQuestion(q));
   };
 
-  const handleActionChange = (actionType: "Draft" | "Send" | "Update") => {
+  const handleActionChange = (actionType: "Draft" | "Send" | "Update" | "Load" | "Delete") => {
     dispatch(setAction(actionType));
+
+    // Clear selected past email when changing actions
+    dispatch(setSelectedPastEmail(null));
+
+    // Fetch past emails when Load or Delete is selected
+    if (actionType === "Load" || actionType === "Delete") {
+      dispatch(fetchPastEmailsThunk());
+    }
+
+    // Fetch designs when Draft is selected
+    if (actionType === "Draft") {
+      dispatch(fetchDesignsThunk());
+    }
+
     if (actionType !== "Draft" && actionType !== "Send") {
       dispatch(setEmailTitle(""));
       dispatch(setQuestion(""));
@@ -76,12 +121,74 @@ export function useEmailFormHandlers() {
     dispatch(setSendToEmail(email));
   };
 
+  const handlePastEmailChange = (pastEmail: any) => {
+    dispatch(setSelectedPastEmail(pastEmail));
+  };
+
+  const handleDraftDesignChange = (design: any) => {
+    dispatch(setSelectedDraftDesign(design));
+  };
+
+  const handleDraftCustomizationChange = (field: string, value: string) => {
+    dispatch(setDraftCustomizations({ [field]: value }));
+  };
+
+  const handleUseDesignToggle = (useDesign: boolean) => {
+    dispatch(setUseDesignInDraft(useDesign));
+  };
+
+  // HTML Design mode handlers
+  const handleHtmlTemplateChange = (template: any) => {
+    dispatch(setSelectedHtmlTemplate(template));
+  };
+
+  const handleHtmlDesignCustomizationChange = (field: string, value: string) => {
+    dispatch(setHtmlDesignCustomizations({ [field]: value }));
+  };
+
+  const handleHtmlDesignQuestionChange = (question: string) => {
+    dispatch(setHtmlDesignQuestion(question));
+  };
+
+  const handleViewModeChange = (mode: "Raw HTML" | "Preview") => {
+    dispatch(setViewMode(mode));
+  };
+
+  const handleDesignOptionChange = (option: "Templates" | "Designs") => {
+    dispatch(setDesignOption(option));
+
+    // Fetch appropriate data based on selection
+    if (option === "Templates") {
+      dispatch(fetchTemplatesForDesignThunk());
+    } else {
+      dispatch(fetchDesignsThunk());
+    }
+  };
+
   const handleSubmit = async () => {
     dispatch(handleSubmitThunk());
   };
 
+  const handleSubmitWithDesign = async () => {
+    dispatch(generateEmailWithDesignThunk());
+  };
+
+  const handleSubmitHtmlDesign = async () => {
+    dispatch(generateHtmlDesignThunk());
+  };
+
   const handleSendEmail = async () => {
     dispatch(handleSendEmailThunk());
+  };
+
+  const handleLoadEmail = async (emailId: string) => {
+    dispatch(loadPastEmailThunk(emailId));
+  };
+
+  const handleDeleteEmail = async (emailId: string) => {
+    dispatch(deletePastEmailThunk(emailId));
+    // Clear selection after deletion
+    dispatch(setSelectedPastEmail(null));
   };
 
   return {
@@ -91,7 +198,20 @@ export function useEmailFormHandlers() {
     handleActionChange,
     handleUpdateRequestChange,
     handleSendToEmailChange,
+    handlePastEmailChange,
+    handleDraftDesignChange,
+    handleDraftCustomizationChange,
+    handleUseDesignToggle,
+    handleHtmlTemplateChange,
+    handleHtmlDesignCustomizationChange,
+    handleHtmlDesignQuestionChange,
+    handleViewModeChange,
+    handleDesignOptionChange,
     handleSubmit,
+    handleSubmitWithDesign,
+    handleSubmitHtmlDesign,
     handleSendEmail,
+    handleLoadEmail,
+    handleDeleteEmail,
   };
 }
