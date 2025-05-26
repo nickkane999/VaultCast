@@ -5,7 +5,17 @@ import { useState } from "react";
 
 export const useEssentialList = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { essentials, loading, error, showForm, newEssential, editingEssentialId, editedEssential, essentialDecisions } = useSelector((state: RootState) => state.decisionHelper.essentials);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const essentials = useSelector((state: RootState) => state.decisionHelper.essentials.essentials);
+  const loading = useSelector((state: RootState) => state.decisionHelper.essentials.loading);
+  const error = useSelector((state: RootState) => state.decisionHelper.essentials.error);
+  const showForm = useSelector((state: RootState) => state.decisionHelper.essentials.showForm);
+  const newEssential = useSelector((state: RootState) => state.decisionHelper.essentials.newEssential);
+  const editingEssentialId = useSelector((state: RootState) => state.decisionHelper.essentials.editingEssentialId);
+  const editedEssential = useSelector((state: RootState) => state.decisionHelper.essentials.editedEssential);
+  const essentialDecisions = useSelector((state: RootState) => state.decisionHelper.essentials.essentialDecisions);
+
   const [dateFilter, setDateFilter] = useState("Current Month");
   const [sortOrder, setSortOrder] = useState<"Ascending" | "Descending">("Ascending");
   const [hidePastDates, setHidePastDates] = useState(true);

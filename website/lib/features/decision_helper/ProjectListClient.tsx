@@ -6,6 +6,7 @@ import { Project, Task } from "./types";
 import styles from "./DecisionHelper.module.css";
 import { useProjectList } from "./hooks/useProjectList";
 import CompletionDialog from "@/lib/components/CompletionDialog";
+import IsolatedTextField from "@/lib/components/IsolatedTextField";
 
 export default function ProjectListClient({ initialProjects = [] }: { initialProjects: Project[] }) {
   const {
@@ -23,7 +24,9 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
     completingProjectId,
     handleAddCard,
     handleFormChange,
+    handleDebouncedFormChange,
     handleEditFormChange,
+    handleDebouncedEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
     handleDelete,
@@ -70,7 +73,7 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
 
       {showForm && (
         <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
-          <TextField name="name" label="Project Name" value={newProject.name} onChange={handleFormChange} fullWidth margin="normal" required />
+          <IsolatedTextField name="name" label="Project Name" value={newProject.name} onDebouncedChange={handleDebouncedFormChange("name")} fullWidth margin="normal" required />
           <TextField name="description" label="Description" value={newProject.description} onChange={handleFormChange} fullWidth margin="normal" required multiline rows={4} />
           <TextField name="dueDate" label="Due Date" type="date" value={newProject.dueDate} onChange={handleFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
           <FormControlLabel control={<Checkbox name="is_completed" checked={newProject.is_completed || false} onChange={handleFormChange} />} label="Completed" />
@@ -91,7 +94,7 @@ export default function ProjectListClient({ initialProjects = [] }: { initialPro
           projects.map((project: Project) =>
             editingId === project.id ? (
               <Box component="form" key={project.id} onSubmit={handleEditFormSubmit} className={styles.formBox}>
-                <TextField name="name" label="Edit Project Name" value={editedProject?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
+                <IsolatedTextField name="name" label="Edit Project Name" value={editedProject?.name || ""} onDebouncedChange={handleDebouncedEditFormChange("name")} fullWidth margin="normal" required />
                 <TextField name="description" label="Edit Description" value={editedProject?.description || ""} onChange={handleEditFormChange} fullWidth margin="normal" required multiline rows={4} />
                 <TextField name="dueDate" label="Edit Due Date" type="date" value={editedProject?.dueDate || ""} onChange={handleEditFormChange} fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
                 <FormControlLabel control={<Checkbox name="is_completed" checked={editedProject?.is_completed || false} onChange={handleEditFormChange} />} label="Completed" />

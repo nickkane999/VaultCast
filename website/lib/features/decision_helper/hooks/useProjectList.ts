@@ -26,7 +26,20 @@ interface UseProjectListProps {
 
 export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { projects, projectShowForm, newProject, editingProjectId, editedProject, loading, statusFilter, sortOrder, hidePastDates, completionDialogOpen, completionDescription, completingProjectId } = useSelector((state: RootState) => state.decisionHelper.projects);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const projects = useSelector((state: RootState) => state.decisionHelper.projects.projects);
+  const projectShowForm = useSelector((state: RootState) => state.decisionHelper.projects.projectShowForm);
+  const newProject = useSelector((state: RootState) => state.decisionHelper.projects.newProject);
+  const editingProjectId = useSelector((state: RootState) => state.decisionHelper.projects.editingProjectId);
+  const editedProject = useSelector((state: RootState) => state.decisionHelper.projects.editedProject);
+  const loading = useSelector((state: RootState) => state.decisionHelper.projects.loading);
+  const statusFilter = useSelector((state: RootState) => state.decisionHelper.projects.statusFilter);
+  const sortOrder = useSelector((state: RootState) => state.decisionHelper.projects.sortOrder);
+  const hidePastDates = useSelector((state: RootState) => state.decisionHelper.projects.hidePastDates);
+  const completionDialogOpen = useSelector((state: RootState) => state.decisionHelper.projects.completionDialogOpen);
+  const completionDescription = useSelector((state: RootState) => state.decisionHelper.projects.completionDescription);
+  const completingProjectId = useSelector((state: RootState) => state.decisionHelper.projects.completingProjectId);
 
   const getFilteredProjects = () => {
     let filteredProjects = projects.length > 0 ? [...projects] : [...initialProjects];
@@ -83,6 +96,11 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     }
   };
 
+  // Debounced handler for isolated text fields
+  const handleDebouncedFormChange = (name: string) => (value: string) => {
+    dispatch(updateNewProject({ [name]: value }));
+  };
+
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
     if (type === "checkbox") {
@@ -90,6 +108,11 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     } else {
       dispatch(updateEditedProject({ [name]: value }));
     }
+  };
+
+  // Debounced handler for isolated text fields in edit mode
+  const handleDebouncedEditFormChange = (name: string) => (value: string) => {
+    dispatch(updateEditedProject({ [name]: value }));
   };
 
   const handleToggleComplete = (project: Project) => {
@@ -192,7 +215,9 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     completingProjectId,
     handleAddCard,
     handleFormChange,
+    handleDebouncedFormChange,
     handleEditFormChange,
+    handleDebouncedEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
     handleDelete,

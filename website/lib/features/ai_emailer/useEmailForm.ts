@@ -84,8 +84,18 @@ export function useEmailFormHandlers() {
     dispatch(setEmailTitle(title));
   };
 
+  // Debounced handler for email title
+  const handleDebouncedEmailTitleChange = (title: string) => {
+    dispatch(setEmailTitle(title));
+  };
+
   const handleQuestionChange = (q: string) => {
     dispatch(setQuestion(q));
+  };
+
+  // Debounced handler for question
+  const handleDebouncedQuestionChange = (question: string) => {
+    dispatch(setQuestion(question));
   };
 
   const handleActionChange = (actionType: "Draft" | "Send" | "Update" | "Load" | "Delete") => {
@@ -194,7 +204,9 @@ export function useEmailFormHandlers() {
   return {
     handleRequestTypeChange,
     handleEmailTitleChange,
+    handleDebouncedEmailTitleChange,
     handleQuestionChange,
+    handleDebouncedQuestionChange,
     handleActionChange,
     handleUpdateRequestChange,
     handleSendToEmailChange,

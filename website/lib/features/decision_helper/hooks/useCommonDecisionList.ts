@@ -9,7 +9,15 @@ interface UseCommonDecisionListProps {
 
 export const useCommonDecisionList = ({ initialDecisions }: UseCommonDecisionListProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { commonDecisions, decisionShowForm, newDecision, editingDecisionId, editedDecision, commonDecisionResults, loading } = useSelector((state: RootState) => state.decisionHelper.commonDecisions);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const commonDecisions = useSelector((state: RootState) => state.decisionHelper.commonDecisions.commonDecisions);
+  const decisionShowForm = useSelector((state: RootState) => state.decisionHelper.commonDecisions.decisionShowForm);
+  const newDecision = useSelector((state: RootState) => state.decisionHelper.commonDecisions.newDecision);
+  const editingDecisionId = useSelector((state: RootState) => state.decisionHelper.commonDecisions.editingDecisionId);
+  const editedDecision = useSelector((state: RootState) => state.decisionHelper.commonDecisions.editedDecision);
+  const commonDecisionResults = useSelector((state: RootState) => state.decisionHelper.commonDecisions.commonDecisionResults);
+  const loading = useSelector((state: RootState) => state.decisionHelper.commonDecisions.loading);
 
   const handleAddCard = () => dispatch(setDecisionShowForm(true));
 

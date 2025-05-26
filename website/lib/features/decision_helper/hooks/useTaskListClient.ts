@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
+import { useMemo } from "react";
 import {
   setTaskShowForm,
   setNewTask,
@@ -32,10 +33,28 @@ interface UseTaskListClientProps {
 
 export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskListClientProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { tasks, taskShowForm, newTask, editingTaskId, editedTask, editedTaskTags, taskDecisions, tagFilter, statusFilter, availableTags, addTagInputValue, newTagInput, taskNotification, projectFilter, loading, completionDialogOpen, completionDescription, completingTaskId } = useSelector(
-    (state: RootState) => state.decisionHelper.tasks
-  );
-  const { projects } = useSelector((state: RootState) => state.decisionHelper.projects);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const tasks = useSelector((state: RootState) => state.decisionHelper.tasks.tasks);
+  const taskShowForm = useSelector((state: RootState) => state.decisionHelper.tasks.taskShowForm);
+  const newTask = useSelector((state: RootState) => state.decisionHelper.tasks.newTask);
+  const editingTaskId = useSelector((state: RootState) => state.decisionHelper.tasks.editingTaskId);
+  const editedTask = useSelector((state: RootState) => state.decisionHelper.tasks.editedTask);
+  const editedTaskTags = useSelector((state: RootState) => state.decisionHelper.tasks.editedTaskTags);
+  const taskDecisions = useSelector((state: RootState) => state.decisionHelper.tasks.taskDecisions);
+  const tagFilter = useSelector((state: RootState) => state.decisionHelper.tasks.tagFilter);
+  const statusFilter = useSelector((state: RootState) => state.decisionHelper.tasks.statusFilter);
+  const availableTags = useSelector((state: RootState) => state.decisionHelper.tasks.availableTags);
+  const addTagInputValue = useSelector((state: RootState) => state.decisionHelper.tasks.addTagInputValue);
+  const newTagInput = useSelector((state: RootState) => state.decisionHelper.tasks.newTagInput);
+  const taskNotification = useSelector((state: RootState) => state.decisionHelper.tasks.taskNotification);
+  const projectFilter = useSelector((state: RootState) => state.decisionHelper.tasks.projectFilter);
+  const loading = useSelector((state: RootState) => state.decisionHelper.tasks.loading);
+  const completionDialogOpen = useSelector((state: RootState) => state.decisionHelper.tasks.completionDialogOpen);
+  const completionDescription = useSelector((state: RootState) => state.decisionHelper.tasks.completionDescription);
+  const completingTaskId = useSelector((state: RootState) => state.decisionHelper.tasks.completingTaskId);
+
+  const projects = useSelector((state: RootState) => state.decisionHelper.projects.projects);
 
   const handleAddTaskCard = () => {
     dispatch(setNewTask({ name: "", is_completed: false, tags: [], projectId: undefined }));
@@ -49,6 +68,11 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     if (name !== "tags") {
       dispatch(updateNewTask({ [name]: type === "checkbox" ? checked : value }));
     }
+  };
+
+  // Debounced handler for isolated text fields
+  const handleDebouncedFormChange = (name: string) => (value: string) => {
+    dispatch(updateNewTask({ [name]: value }));
   };
 
   const handleProjectChange = (projectId: string | undefined) => {
@@ -66,6 +90,11 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     if (name !== "tags") {
       dispatch(updateEditedTask({ [name]: type === "checkbox" ? checked : value }));
     }
+  };
+
+  // Debounced handler for isolated text fields in edit mode
+  const handleDebouncedEditFormChange = (name: string) => (value: string) => {
+    dispatch(updateEditedTask({ [name]: value }));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -223,9 +252,11 @@ export const useTaskListClient = ({ initialTasks, initialProjects }: UseTaskList
     completingTaskId,
     handleAddTaskCard,
     handleFormChange,
+    handleDebouncedFormChange,
     handleProjectChange,
     handleEditProjectChange,
     handleEditFormChange,
+    handleDebouncedEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
     handleDelete,

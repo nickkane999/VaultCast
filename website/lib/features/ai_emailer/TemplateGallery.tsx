@@ -16,7 +16,10 @@ interface TemplateGalleryProps {
 
 export default function TemplateGallery({ templates, loading, error }: TemplateGalleryProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { selectedTemplate, selectedCategory } = useSelector((state: RootState) => state.aiEmailer);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const selectedTemplate = useSelector((state: RootState) => state.aiEmailer.selectedTemplate);
+  const selectedCategory = useSelector((state: RootState) => state.aiEmailer.selectedCategory);
 
   const filteredTemplates = templates.filter((template) => selectedCategory === "all" || template.category === selectedCategory);
 

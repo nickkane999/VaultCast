@@ -5,34 +5,34 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import "@/store/aiEmailerSlice";
 import { useEditAiResponse, useEmailFormHandlers } from "./useEmailForm";
+import IsolatedTextField from "@/lib/components/IsolatedTextField";
 
 export default function EmailForm() {
-  const {
-    requestType,
-    emailTitle,
-    question,
-    aiResponse,
-    loading,
-    error,
-    action,
-    updateRequest,
-    sendToEmail,
-    pastEmails,
-    selectedPastEmail,
-    pastEmailsLoading,
-    pastEmailsError,
-    designs,
-    selectedDraftDesign,
-    draftCustomizations,
-    useDesignInDraft,
-    designLoading,
-    templates,
-    selectedHtmlTemplate,
-    htmlDesignCustomizations,
-    htmlDesignQuestion,
-    viewMode,
-    designOption,
-  } = useSelector((state: RootState) => state.aiEmailer);
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const requestType = useSelector((state: RootState) => state.aiEmailer.requestType);
+  const emailTitle = useSelector((state: RootState) => state.aiEmailer.emailTitle);
+  const question = useSelector((state: RootState) => state.aiEmailer.question);
+  const aiResponse = useSelector((state: RootState) => state.aiEmailer.aiResponse);
+  const loading = useSelector((state: RootState) => state.aiEmailer.loading);
+  const error = useSelector((state: RootState) => state.aiEmailer.error);
+  const action = useSelector((state: RootState) => state.aiEmailer.action);
+  const updateRequest = useSelector((state: RootState) => state.aiEmailer.updateRequest);
+  const sendToEmail = useSelector((state: RootState) => state.aiEmailer.sendToEmail);
+  const pastEmails = useSelector((state: RootState) => state.aiEmailer.pastEmails);
+  const selectedPastEmail = useSelector((state: RootState) => state.aiEmailer.selectedPastEmail);
+  const pastEmailsLoading = useSelector((state: RootState) => state.aiEmailer.pastEmailsLoading);
+  const pastEmailsError = useSelector((state: RootState) => state.aiEmailer.pastEmailsError);
+  const designs = useSelector((state: RootState) => state.aiEmailer.designs);
+  const selectedDraftDesign = useSelector((state: RootState) => state.aiEmailer.selectedDraftDesign);
+  const draftCustomizations = useSelector((state: RootState) => state.aiEmailer.draftCustomizations);
+  const useDesignInDraft = useSelector((state: RootState) => state.aiEmailer.useDesignInDraft);
+  const designLoading = useSelector((state: RootState) => state.aiEmailer.designLoading);
+  const templates = useSelector((state: RootState) => state.aiEmailer.templates);
+  const selectedHtmlTemplate = useSelector((state: RootState) => state.aiEmailer.selectedHtmlTemplate);
+  const htmlDesignCustomizations = useSelector((state: RootState) => state.aiEmailer.htmlDesignCustomizations);
+  const htmlDesignQuestion = useSelector((state: RootState) => state.aiEmailer.htmlDesignQuestion);
+  const viewMode = useSelector((state: RootState) => state.aiEmailer.viewMode);
+  const designOption = useSelector((state: RootState) => state.aiEmailer.designOption);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -40,7 +40,9 @@ export default function EmailForm() {
   const {
     handleRequestTypeChange,
     handleEmailTitleChange,
+    handleDebouncedEmailTitleChange,
     handleQuestionChange,
+    handleDebouncedQuestionChange,
     handleActionChange,
     handleUpdateRequestChange,
     handleSendToEmailChange,
@@ -167,9 +169,9 @@ export default function EmailForm() {
           {/* Show Email Title and Question for non-HTML Design modes */}
           {requestType !== "HTML Design" && (
             <>
-              <TextField fullWidth label="Email Title" value={emailTitle} onChange={(e) => handleEmailTitleChange(e.target.value)} sx={{ mb: 2 }} />
+              <IsolatedTextField fullWidth label="Email Title" value={emailTitle} onDebouncedChange={handleDebouncedEmailTitleChange} sx={{ mb: 2 }} />
 
-              <TextField fullWidth label="Question" value={question} onChange={(e) => handleQuestionChange(e.target.value)} multiline rows={4} sx={{ mb: 2 }} />
+              <IsolatedTextField fullWidth label="Question" value={question} onDebouncedChange={handleDebouncedQuestionChange} multiline rows={4} sx={{ mb: 2 }} />
             </>
           )}
 
@@ -321,7 +323,7 @@ export default function EmailForm() {
 
       {action === "Send" && aiResponse && (
         <>
-          <TextField fullWidth label="Email Subject" value={emailTitle} onChange={(e) => handleEmailTitleChange(e.target.value)} sx={{ mb: 2 }} />
+          <IsolatedTextField fullWidth label="Email Subject" value={emailTitle} onDebouncedChange={handleDebouncedEmailTitleChange} sx={{ mb: 2 }} />
           <TextField fullWidth label="Send To Email Address" value={sendToEmail} onChange={(e) => handleSendToEmailChange(e.target.value)} sx={{ mb: 2 }} type="email" />
           <Button variant="contained" onClick={handleSendEmail} fullWidth disabled={loading || !sendToEmail || !emailTitle} sx={{ mt: 2 }}>
             {loading ? <CircularProgress size={24} /> : "Send Email"}

@@ -10,6 +10,7 @@ import { useTaskListClient } from "./hooks/useTaskListClient";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import CompletionDialog from "@/lib/components/CompletionDialog";
+import IsolatedTextField from "@/lib/components/IsolatedTextField";
 
 export default function TaskListClient({ initialTasks = [], initialProjects = [] }: { initialTasks: Task[]; initialProjects: Project[] }) {
   const {
@@ -34,9 +35,11 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
     completingTaskId,
     handleAddTaskCard,
     handleFormChange,
+    handleDebouncedFormChange,
     handleProjectChange,
     handleEditProjectChange,
     handleEditFormChange,
+    handleDebouncedEditFormChange,
     handleFormSubmit,
     handleEditFormSubmit,
     handleDelete,
@@ -105,7 +108,7 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
       </Button>
       {showForm && (
         <Box component="form" onSubmit={handleFormSubmit} className={styles.formBox}>
-          <TextField name="name" label="Task name" value={newTask.name} onChange={handleFormChange} fullWidth margin="normal" required />
+          <IsolatedTextField name="name" label="Task name" value={newTask.name} onDebouncedChange={handleDebouncedFormChange("name")} fullWidth margin="normal" required />
           <FormControlLabel control={<Checkbox name="is_completed" checked={newTask.is_completed} onChange={handleFormChange} />} label="Completed" />
 
           {/* Project Selection Dropdown */}
@@ -184,7 +187,7 @@ export default function TaskListClient({ initialTasks = [], initialProjects = []
         {displayedTasks.map((task: Task) => {
           return editingId === task.id ? (
             <Box component="form" onSubmit={handleEditFormSubmit} key={task.id} className={styles.formBox}>
-              <TextField name="name" label="Edit Task name" value={editedTask?.name || ""} onChange={handleEditFormChange} fullWidth margin="normal" required />
+              <IsolatedTextField name="name" label="Edit Task name" value={editedTask?.name || ""} onDebouncedChange={handleDebouncedEditFormChange("name")} fullWidth margin="normal" required />
               <FormControlLabel control={<Checkbox name="is_completed" checked={editedTask?.is_completed || false} onChange={handleEditFormChange} />} label="Completed" />
 
               <FormControl fullWidth margin="normal">

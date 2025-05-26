@@ -13,7 +13,15 @@ const steps = ["Choose Template", "Customize Design", "Preview & Save"];
 
 export default function EmailDesignTab() {
   const dispatch = useDispatch<AppDispatch>();
-  const { templates, designs, selectedTemplate, designLoading, designError, designMode, selectedDesignForUpdate } = useSelector((state: RootState) => state.aiEmailer);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const templates = useSelector((state: RootState) => state.aiEmailer.templates);
+  const designs = useSelector((state: RootState) => state.aiEmailer.designs);
+  const selectedTemplate = useSelector((state: RootState) => state.aiEmailer.selectedTemplate);
+  const designLoading = useSelector((state: RootState) => state.aiEmailer.designLoading);
+  const designError = useSelector((state: RootState) => state.aiEmailer.designError);
+  const designMode = useSelector((state: RootState) => state.aiEmailer.designMode);
+  const selectedDesignForUpdate = useSelector((state: RootState) => state.aiEmailer.selectedDesignForUpdate);
 
   const [activeStep, setActiveStep] = React.useState(0);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);

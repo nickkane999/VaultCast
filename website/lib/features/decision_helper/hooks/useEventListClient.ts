@@ -11,7 +11,18 @@ interface UseEventListClientProps {
 
 export const useEventListClient = ({ initialEvents }: UseEventListClientProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { calendarEvents, eventShowForm, newEvent, editingEventId, editedEvent, eventDecisions, dateFilter, sortOrder, hidePastDates, loading } = useSelector((state: RootState) => state.decisionHelper.events);
+
+  // Memoized selectors for specific state pieces to prevent unnecessary re-renders
+  const calendarEvents = useSelector((state: RootState) => state.decisionHelper.events.calendarEvents);
+  const eventShowForm = useSelector((state: RootState) => state.decisionHelper.events.eventShowForm);
+  const newEvent = useSelector((state: RootState) => state.decisionHelper.events.newEvent);
+  const editingEventId = useSelector((state: RootState) => state.decisionHelper.events.editingEventId);
+  const editedEvent = useSelector((state: RootState) => state.decisionHelper.events.editedEvent);
+  const eventDecisions = useSelector((state: RootState) => state.decisionHelper.events.eventDecisions);
+  const dateFilter = useSelector((state: RootState) => state.decisionHelper.events.dateFilter);
+  const sortOrder = useSelector((state: RootState) => state.decisionHelper.events.sortOrder);
+  const hidePastDates = useSelector((state: RootState) => state.decisionHelper.events.hidePastDates);
+  const loading = useSelector((state: RootState) => state.decisionHelper.events.loading);
 
   const handleDecision = (id: string | number) => {
     const randomNum = Math.floor(Math.random() * 100) + 1;
