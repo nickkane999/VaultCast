@@ -5,9 +5,10 @@ import { PlayArrow, Pause, VolumeUp, VolumeOff, Fullscreen } from "@mui/icons-ma
 
 interface VideoPlayerProps {
   filename: string;
+  videoType?: "movie" | "tv";
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ filename }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ filename, videoType = "movie" }) => {
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -21,7 +22,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ filename }) => {
   const controlsTimeoutRef = useRef<number | null>(null);
 
   const contentServerUrl = process.env.NEXT_PUBLIC_CONTENT_SERVER_URL || "http://localhost:3001";
-  const videoUrl = `${contentServerUrl}/videos/${filename}`;
+  // Convert backslashes to forward slashes and encode the filename for URL
+  const encodedFilename = encodeURIComponent(filename.replace(/\\/g, "/"));
+  const videoUrl = videoType === "tv" ? `${contentServerUrl}/videos/tv/${encodedFilename}` : `${contentServerUrl}/videos/movies/${encodedFilename}`;
 
   const togglePlayPause = () => {
     if (!videoRef.current) return;

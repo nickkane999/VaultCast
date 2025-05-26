@@ -1,0 +1,21 @@
+<svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="200" fill="#f5f5f5"/>
+  <rect x="20" y="20" width="260" height="160" fill="#e0e0e0" stroke="#bdbdbd" stroke-width="2"/>
+  
+  <!-- TV icon -->
+  <g transform="translate(150, 90)">
+    <rect x="-30" y="-20" width="60" height="40" fill="#9e9e9e" rx="4"/>
+    <rect x="-25" y="-15" width="50" height="30" fill="#424242"/>
+    <polygon points="-10,-5 -10,5 10,0" fill="white"/>
+    <rect x="-5" y="25" width="10" height="8" fill="#9e9e9e"/>
+    <rect x="-15" y="30" width="30" height="3" fill="#bdbdbd" rx="1"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="150" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#757575">
+    TV Episode
+  </text>
+  <text x="150" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#9e9e9e">
+    No Image Available
+  </text>
+</svg> 

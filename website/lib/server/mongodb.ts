@@ -30,3 +30,19 @@ export async function getCollection(collectionName: string): Promise<Collection>
   const db: Db = client.db(); // Use the default database name from the connection string
   return db.collection(collectionName);
 }
+
+// Function to get list of all collections in the database
+export async function getCollectionNames(): Promise<string[]> {
+  const client = await clientPromise;
+  const db: Db = client.db();
+  const collections = await db.listCollections().toArray();
+  return collections.map((collection) => collection.name);
+}
+
+// Function to rename a collection
+export async function renameCollection(oldName: string, newName: string): Promise<void> {
+  const client = await clientPromise;
+  const db: Db = client.db();
+  const collection = db.collection(oldName);
+  await collection.rename(newName);
+}

@@ -7,16 +7,27 @@ import TrailerButton from "@/lib/components/TrailerButton";
 async function getVideoRecord(id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   try {
-    const response = await fetch(`${baseUrl}/api/videos/${id}`, {
+    // Try movies first
+    let response = await fetch(`${baseUrl}/api/videos/movies/${id}`, {
       next: { revalidate: 300 },
     });
 
-    if (!response.ok) {
-      return null;
+    if (response.ok) {
+      const data = await response.json();
+      return { ...data, type: "movie" };
     }
 
-    const data = await response.json();
-    return data;
+    // If not found in movies, try TV shows
+    response = await fetch(`${baseUrl}/api/videos/tv/${id}`, {
+      next: { revalidate: 300 },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { ...data, type: "tv" };
+    }
+
+    return null;
   } catch (error) {
     console.error("Error fetching video record:", error);
     return null;
@@ -87,6 +98,12 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ id
               {videoRecord.title}
             </Typography>
 
+            {videoRecord.type === "tv" && (
+              <Typography variant="h5" sx={{ color: "text.secondary", mb: 1 }}>
+                {videoRecord.show_name} - Season {videoRecord.season_number}, Episode {videoRecord.episode_number}
+              </Typography>
+            )}
+
             {videoRecord.tagline && (
               <Typography variant="h6" sx={{ fontStyle: "italic", color: "text.secondary", mb: 2 }}>
                 "{videoRecord.tagline}"
@@ -112,16 +129,23 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ id
                 </Box>
               )}
 
-              {videoRecord.release_date && <Chip label={getYear(videoRecord.release_date)} color="primary" variant="outlined" />}
+              {videoRecord.type === "movie" && videoRecord.release_date && <Chip label={getYear(videoRecord.release_date)} color="primary" variant="outlined" />}
+              {videoRecord.type === "tv" && videoRecord.air_date && <Chip label={getYear(videoRecord.air_date)} color="primary" variant="outlined" />}
 
               {videoRecord.runtime && <Chip icon={<AccessTime />} label={formatRuntime(videoRecord.runtime)} variant="outlined" />}
 
               {videoRecord.status && videoRecord.status !== "Released" && <Chip label={videoRecord.status} color="secondary" variant="outlined" />}
             </Box>
 
-            {videoRecord.release_date && (
+            {videoRecord.type === "movie" && videoRecord.release_date && (
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Released: {formatDate(videoRecord.release_date)}
+              </Typography>
+            )}
+
+            {videoRecord.type === "tv" && videoRecord.air_date && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Aired: {formatDate(videoRecord.air_date)}
               </Typography>
             )}
 
@@ -145,7 +169,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ id
             )}
           </Box>
 
-          <VideoPlayer filename={id} />
+          <VideoPlayer filename={videoRecord.filename} videoType={videoRecord.type} />
 
           {videoRecord.description && (
             <Card sx={{ mt: 4 }}>

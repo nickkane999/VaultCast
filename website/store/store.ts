@@ -2,14 +2,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import aiEmailerReducer from "./aiEmailerSlice";
 import aiMessengerReducer from "./aiMessengerSlice";
 import decisionHelperReducer from "./decision_helper/decisionHelperSlice";
-import videosReducer from "./videosSlice";
+import moviesReducer from "./moviesSlice";
+import tvShowsReducer from "./tvShowsSlice";
 
 export const store = configureStore({
   reducer: {
     aiEmailer: aiEmailerReducer,
     aiMessenger: aiMessengerReducer,
     decisionHelper: decisionHelperReducer,
-    videos: videosReducer,
+    movies: moviesReducer,
+    tvShows: tvShowsReducer,
   },
 });
 

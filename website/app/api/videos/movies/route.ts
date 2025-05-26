@@ -33,17 +33,17 @@ function transformVideoRecord(doc: any) {
   };
 }
 
-async function getAvailableVideoFiles() {
+async function getAvailableMovieFiles() {
   const filesUrl = process.env.NEXT_PUBLIC_FILES_URL || "http://localhost:3001";
   try {
-    const response = await fetch(`${filesUrl}/api/files/videos`);
+    const response = await fetch(`${filesUrl}/api/files/videos/movies`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
     return data.files || [];
   } catch (error) {
-    console.error("Error fetching video files:", error);
+    console.error("Error fetching movie files:", error);
     return [];
   }
 }
@@ -64,12 +64,12 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "release_date";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
-    const [availableFiles, collection] = await Promise.all([getAvailableVideoFiles(), getCollection("videos")]);
+    const [availableFiles, collection] = await Promise.all([getAvailableMovieFiles(), getCollection("movie_videos")]);
 
     const videoRecords = await collection.find({}).toArray();
     const videoRecordsMap = new Map(videoRecords.map((record) => [record.filename, record]));
 
-    let allVideos = availableFiles.map((filename: string) => {
+    let allMovies = availableFiles.map((filename: string) => {
       const existingRecord = videoRecordsMap.get(filename);
       if (existingRecord) {
         return transformVideoRecord(existingRecord);
@@ -87,31 +87,31 @@ export async function GET(req: NextRequest) {
 
     // Apply filters
     if (yearFilter) {
-      allVideos = allVideos.filter((video: any) => {
-        if (!video.release_date) return false;
-        const videoYear = new Date(video.release_date).getFullYear().toString();
-        return videoYear === yearFilter;
+      allMovies = allMovies.filter((movie: any) => {
+        if (!movie.release_date) return false;
+        const movieYear = new Date(movie.release_date).getFullYear().toString();
+        return movieYear === yearFilter;
       });
     }
 
     if (actorFilter) {
       const selectedActors = actorFilter.split(",").map((actor) => actor.trim());
-      allVideos = allVideos.filter((video: any) => {
-        return video.actors && selectedActors.some((selectedActor) => video.actors.some((actor: string) => actor.toLowerCase().includes(selectedActor.toLowerCase())));
+      allMovies = allMovies.filter((movie: any) => {
+        return movie.actors && selectedActors.some((selectedActor) => movie.actors.some((actor: string) => actor.toLowerCase().includes(selectedActor.toLowerCase())));
       });
     }
 
     if (genreFilter) {
       const selectedGenres = genreFilter.split(",").map((genre) => genre.trim());
-      allVideos = allVideos.filter((video: any) => {
-        return video.genres && selectedGenres.some((selectedGenre) => video.genres.some((genre: string) => genre.toLowerCase().includes(selectedGenre.toLowerCase())));
+      allMovies = allMovies.filter((movie: any) => {
+        return movie.genres && selectedGenres.some((selectedGenre) => movie.genres.some((genre: string) => genre.toLowerCase().includes(selectedGenre.toLowerCase())));
       });
     }
 
     if (runtimeMin !== null || runtimeMax !== null) {
-      allVideos = allVideos.filter((video: any) => {
-        if (!video.runtime) return false;
-        const runtime = video.runtime;
+      allMovies = allMovies.filter((movie: any) => {
+        if (!movie.runtime) return false;
+        const runtime = movie.runtime;
         if (runtimeMin !== null && runtime < runtimeMin) return false;
         if (runtimeMax !== null && runtime > runtimeMax) return false;
         return true;
@@ -119,9 +119,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (ratingMin !== null || ratingMax !== null) {
-      allVideos = allVideos.filter((video: any) => {
-        if (video.score === undefined) return false;
-        const rating = video.score;
+      allMovies = allMovies.filter((movie: any) => {
+        if (movie.score === undefined) return false;
+        const rating = movie.score;
         if (ratingMin !== null && rating < ratingMin) return false;
         if (ratingMax !== null && rating > ratingMax) return false;
         return true;
@@ -133,14 +133,14 @@ export async function GET(req: NextRequest) {
         .toLowerCase()
         .split(" ")
         .filter((term) => term.length > 0);
-      allVideos = allVideos.filter((video: any) => {
-        const searchableText = [video.title || "", video.description || "", video.filename || "", ...(video.actors || []), ...(video.genres || []), ...(video.keywords || []), video.tagline || ""].join(" ").toLowerCase();
+      allMovies = allMovies.filter((movie: any) => {
+        const searchableText = [movie.title || "", movie.description || "", movie.filename || "", ...(movie.actors || []), ...(movie.genres || []), ...(movie.keywords || []), movie.tagline || ""].join(" ").toLowerCase();
 
         return searchTerms.every((term) => searchableText.includes(term));
       });
     }
 
-    allVideos.sort((a: any, b: any) => {
+    allMovies.sort((a: any, b: any) => {
       let aValue, bValue;
 
       if (sortBy === "rank") {
@@ -160,11 +160,12 @@ export async function GET(req: NextRequest) {
 
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedVideos = allVideos.slice(startIndex, endIndex);
+    const paginatedMovies = allMovies.slice(startIndex, endIndex);
 
     // Get unique values for filter dropdowns
     const allActors = new Set<string>();
     const allGenres = new Set<string>();
+    const allYears = new Set<string>();
 
     videoRecords.forEach((record) => {
       if (record.actors) {
@@ -173,16 +174,21 @@ export async function GET(req: NextRequest) {
       if (record.genres) {
         record.genres.forEach((genre: string) => allGenres.add(genre));
       }
+      if (record.release_date) {
+        const year = new Date(record.release_date).getFullYear().toString();
+        allYears.add(year);
+      }
     });
 
     return NextResponse.json({
-      videos: paginatedVideos,
-      totalVideos: allVideos.length,
+      movies: paginatedMovies,
+      totalMovies: allMovies.length,
       currentPage: page,
-      totalPages: Math.ceil(allVideos.length / limit),
+      totalPages: Math.ceil(allMovies.length / limit),
       filterOptions: {
         actors: Array.from(allActors).sort(),
         genres: Array.from(allGenres).sort(),
+        years: Array.from(allYears).sort().reverse(), // Most recent years first
       },
     });
   } catch (error) {
@@ -199,7 +205,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "All required fields (filename, title, description, score, release_date) are required" }, { status: 400 });
     }
 
-    const collection = await getCollection("videos");
+    const collection = await getCollection("movie_videos");
 
     const existingRecord = await collection.findOne({ filename: videoData.filename });
     if (existingRecord) {
@@ -236,7 +242,7 @@ export async function POST(req: NextRequest) {
     const result = await collection.insertOne(newRecord);
     const createdRecord = transformVideoRecord({ _id: result.insertedId, ...newRecord });
 
-    revalidateTag("videos");
+    revalidateTag("movies");
     return NextResponse.json(createdRecord, { status: 201 });
   } catch (error) {
     console.error("Error creating video record:", error);

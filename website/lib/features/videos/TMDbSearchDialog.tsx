@@ -10,9 +10,12 @@ interface TMDbSearchDialogProps {
   onClose: () => void;
   onSelectMovie: (movieData: any) => void;
   initialSearchTerm?: string;
+  type?: "movie" | "tv";
+  seasonNumber?: number;
+  episodeNumber?: number;
 }
 
-export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initialSearchTerm = "" }: TMDbSearchDialogProps) {
+export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initialSearchTerm = "", type = "movie", seasonNumber, episodeNumber }: TMDbSearchDialogProps) {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,10 +28,10 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
     setError(null);
 
     try {
-      const results = await tmdbService.searchMovies(searchTerm);
+      const results = type === "tv" ? await tmdbService.searchTVShows(searchTerm) : await tmdbService.searchMovies(searchTerm);
       setSearchResults(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to search movies");
+      setError(err instanceof Error ? err.message : `Failed to search ${type === "tv" ? "TV shows" : "movies"}`);
     } finally {
       setLoading(false);
     }
@@ -39,12 +42,35 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
     setError(null);
 
     try {
-      const movieDetails = await tmdbService.getMovieDetails(movie.id);
-      const formData = tmdbService.transformToVideoFormData(movieDetails);
-      onSelectMovie(formData);
+      if (type === "tv") {
+        // Get the show details first
+        const tvDetails = await tmdbService.getTVShowDetails(movie.id);
+
+        // If we have season and episode numbers, fetch specific episode data
+        if (seasonNumber && episodeNumber) {
+          try {
+            const episodeDetails = await tmdbService.getTVEpisodeDetails(movie.id, seasonNumber, episodeNumber);
+            const formData = tmdbService.transformTVEpisodeToFormData(episodeDetails, tvDetails);
+            onSelectMovie(formData);
+          } catch (episodeError) {
+            console.warn(`Episode S${seasonNumber}E${episodeNumber} not found, falling back to show data:`, episodeError);
+            // Fall back to show data if episode not found
+            const formData = tmdbService.transformTVShowToFormData(tvDetails);
+            onSelectMovie(formData);
+          }
+        } else {
+          // No specific episode requested, use show data
+          const formData = tmdbService.transformTVShowToFormData(tvDetails);
+          onSelectMovie(formData);
+        }
+      } else {
+        const movieDetails = await tmdbService.getMovieDetails(movie.id);
+        const formData = tmdbService.transformToVideoFormData(movieDetails);
+        onSelectMovie(formData);
+      }
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch movie details");
+      setError(err instanceof Error ? err.message : `Failed to fetch ${type === "tv" ? "TV show" : "movie"} details`);
     } finally {
       setLoading(false);
     }
@@ -69,7 +95,12 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
       <DialogTitle>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Movie />
-          Load Movie Data from TMDb
+          Load {type === "tv" ? "TV Show" : "Movie"} Data from TMDb
+          {type === "tv" && seasonNumber && episodeNumber && (
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              (Season {seasonNumber}, Episode {episodeNumber})
+            </Typography>
+          )}
         </Box>
       </DialogTitle>
 
@@ -77,11 +108,11 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
         <Box sx={{ mb: 2 }}>
           <TextField
             fullWidth
-            label="Search for movie"
+            label={`Search for ${type === "tv" ? "TV show" : "movie"}`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Enter movie title..."
+            placeholder={`Enter ${type === "tv" ? "TV show" : "movie"} title...`}
             variant="outlined"
             InputProps={{
               endAdornment: (
@@ -129,7 +160,7 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
                 <ListItemText
                   primary={
                     <Typography variant="h6" component="div">
-                      {movie.title} {movie.release_date && `(${formatDate(movie.release_date)})`}
+                      {type === "tv" ? movie.name : movie.title} {(type === "tv" ? movie.first_air_date : movie.release_date) && `(${formatDate(type === "tv" ? movie.first_air_date : movie.release_date)})`}
                     </Typography>
                   }
                   secondary={
@@ -150,13 +181,19 @@ export default function TMDbSearchDialog({ open, onClose, onSelectMovie, initial
 
         {!loading && searchResults.length === 0 && searchTerm && (
           <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
-            No movies found for "{searchTerm}". Try a different search term.
+            No {type === "tv" ? "TV shows" : "movies"} found for "{searchTerm}". Try a different search term.
           </Typography>
         )}
 
         {!searchTerm && (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
-            Enter a movie title to search The Movie Database (TMDb).
+            Enter a {type === "tv" ? "TV show" : "movie"} title to search The Movie Database (TMDb).
+            {type === "tv" && seasonNumber && episodeNumber && (
+              <>
+                <br />
+                Will fetch episode-specific data for Season {seasonNumber}, Episode {episodeNumber}.
+              </>
+            )}
           </Typography>
         )}
       </DialogContent>

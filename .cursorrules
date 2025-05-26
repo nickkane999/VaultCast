@@ -1,0 +1,5 @@
+You will need to use the IsolatedTextField.tsx component in the website/lib/components folder, instead of <TextField> components to make sure data loads efficiently.
+The website directory is the root directory for the website.
+The content-server directory is the root directory for the content server that stores the videos, images, and files for the website.
+content-server is loaded with npm run dev in the content-server directory.
+The website is loaded with npm run dev in the website directory.

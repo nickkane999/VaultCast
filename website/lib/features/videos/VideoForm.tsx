@@ -7,12 +7,17 @@ import { VideoFormProps, CastMember } from "./types";
 import TMDbSearchDialog from "./TMDbSearchDialog";
 import { tmdbService } from "@/lib/services/tmdbService";
 
-export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoFormProps) {
+export default function VideoForm({ video, onSubmit, onCancel, mode, type }: VideoFormProps) {
   const [formData, setFormData] = useState({
+    filename: video?.filename || "",
     title: video?.title || "",
     description: video?.description || "",
     score: video?.score || 0,
     release_date: video?.release_date || "",
+    air_date: video?.air_date || "",
+    season_number: video?.season_number || 1,
+    episode_number: video?.episode_number || 1,
+    show_name: video?.show_name || "",
     tagline: video?.tagline || "",
     runtime: video?.runtime || 0,
     genres: video?.genres || [],
@@ -39,10 +44,15 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
   useEffect(() => {
     if (video) {
       setFormData({
+        filename: video.filename || "",
         title: video.title || "",
         description: video.description || "",
         score: video.score || 0,
         release_date: video.release_date || "",
+        air_date: video.air_date || "",
+        season_number: video.season_number || 1,
+        episode_number: video.episode_number || 1,
+        show_name: video.show_name || "",
         tagline: video.tagline || "",
         runtime: video.runtime || 0,
         genres: video.genres || [],
@@ -79,8 +89,17 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
       newErrors.score = "Score must be between 0 and 10";
     }
 
-    if (!formData.release_date) {
-      newErrors.release_date = "Release date is required";
+    if (type === "tv") {
+      if (!formData.air_date) {
+        newErrors.air_date = "Air date is required";
+      }
+      if (!formData.show_name?.trim()) {
+        newErrors.show_name = "Show name is required";
+      }
+    } else {
+      if (!formData.release_date) {
+        newErrors.release_date = "Release date is required";
+      }
     }
 
     setErrors(newErrors);
@@ -91,7 +110,12 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      // Include the original filename in the submitted data
+      const submitData = {
+        ...formData,
+        filename: video?.filename || formData.filename,
+      };
+      onSubmit(submitData);
     }
   };
 
@@ -148,6 +172,14 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
 
               <TextField fullWidth label="Description" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} error={!!errors.description} helperText={errors.description} multiline rows={3} required />
 
+              {type === "tv" && (
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <TextField fullWidth label="Show Name" value={formData.show_name} onChange={(e) => handleChange("show_name", e.target.value)} required />
+                  <TextField label="Season" type="number" value={formData.season_number} onChange={(e) => handleChange("season_number", parseInt(e.target.value) || 1)} inputProps={{ min: 1 }} sx={{ width: 120 }} required />
+                  <TextField label="Episode" type="number" value={formData.episode_number} onChange={(e) => handleChange("episode_number", parseInt(e.target.value) || 1)} inputProps={{ min: 1 }} sx={{ width: 120 }} required />
+                </Box>
+              )}
+
               <Box>
                 <Typography component="legend">Score</Typography>
                 <Rating
@@ -163,12 +195,12 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
               </Box>
 
               <TextField
-                label="Release Date"
+                label={type === "tv" ? "Air Date" : "Release Date"}
                 type="date"
-                value={formData.release_date}
-                onChange={(e) => handleChange("release_date", e.target.value)}
-                error={!!errors.release_date}
-                helperText={errors.release_date}
+                value={type === "tv" ? formData.air_date : formData.release_date}
+                onChange={(e) => handleChange(type === "tv" ? "air_date" : "release_date", e.target.value)}
+                error={!!(type === "tv" ? errors.air_date : errors.release_date)}
+                helperText={type === "tv" ? errors.air_date : errors.release_date}
                 InputLabelProps={{
                   shrink: true,
                 }}
@@ -261,7 +293,15 @@ export default function VideoForm({ video, onSubmit, onCancel, mode }: VideoForm
         </CardContent>
       </Card>
 
-      <TMDbSearchDialog open={showTMDbDialog} onClose={() => setShowTMDbDialog(false)} onSelectMovie={handleTMDbData} initialSearchTerm={formData.title || (video?.filename ? tmdbService.extractTitleFromFilename(video.filename) : "")} />
+      <TMDbSearchDialog
+        open={showTMDbDialog}
+        onClose={() => setShowTMDbDialog(false)}
+        onSelectMovie={handleTMDbData}
+        initialSearchTerm={formData.title || (video?.filename ? tmdbService.extractTitleFromFilename(video.filename) : "")}
+        type={type}
+        seasonNumber={type === "tv" ? formData.season_number : undefined}
+        episodeNumber={type === "tv" ? formData.episode_number : undefined}
+      />
     </>
   );
 }

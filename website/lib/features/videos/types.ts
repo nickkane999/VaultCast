@@ -5,6 +5,10 @@ export interface VideoRecord {
   description?: string;
   score?: number;
   release_date?: string;
+  air_date?: string;
+  season_number?: number;
+  episode_number?: number;
+  show_name?: string;
   tmdb_id?: number;
   imdb_id?: string;
   tagline?: string;
@@ -33,10 +37,15 @@ export interface CastMember {
 }
 
 export interface VideoFormData {
+  filename?: string; // Include filename to preserve it during updates
   title: string;
   description: string;
   score: number;
   release_date: string;
+  air_date?: string;
+  season_number?: number;
+  episode_number?: number;
+  show_name?: string;
   tagline?: string;
   runtime?: number;
   genres?: string[];
@@ -114,6 +123,7 @@ export interface VideoFormProps {
   onSubmit: (data: VideoFormData) => void;
   onCancel: () => void;
   mode: "create" | "edit";
+  type: "movie" | "tv";
 }
 
 export interface VideoCardProps {
