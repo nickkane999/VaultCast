@@ -21,6 +21,7 @@ import {
   setGenreFilter,
   setRuntimeFilter,
   setRatingFilter,
+  setShowUnrecordedFilter,
 } from "@/store/moviesSlice";
 import { Box, Card, CardContent, CardMedia, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Pagination, FormControl, InputLabel, Select, MenuItem, Chip, CircularProgress, Alert, Paper, Rating, Collapse, IconButton } from "@mui/material";
 import { Add, Edit, Delete, Search, Movie, ExpandMore, ExpandLess } from "@mui/icons-material";
@@ -51,6 +52,7 @@ export default function MoviesClient() {
   const genreFilter = useSelector((state: RootState) => state.movies.genreFilter);
   const runtimeFilter = useSelector((state: RootState) => state.movies.runtimeFilter);
   const ratingFilter = useSelector((state: RootState) => state.movies.ratingFilter);
+  const showUnrecordedFilter = useSelector((state: RootState) => state.movies.showUnrecordedFilter);
   const filterOptions = useSelector((state: RootState) => state.movies.filterOptions);
 
   // Local state for advanced info
@@ -66,6 +68,7 @@ export default function MoviesClient() {
     runtimeMax: runtimeFilter.max,
     ratingMin: ratingFilter.min,
     ratingMax: ratingFilter.max,
+    showUnrecorded: showUnrecordedFilter,
   };
 
   // Initialize filters from URL on component mount
@@ -82,6 +85,7 @@ export default function MoviesClient() {
       const urlRatingMax = searchParams.get("ratingMax");
       const urlRuntimeMin = searchParams.get("runtimeMin");
       const urlRuntimeMax = searchParams.get("runtimeMax");
+      const urlShowUnrecorded = searchParams.get("showUnrecorded");
 
       if (urlPage && parseInt(urlPage) !== currentPage) {
         dispatch(setCurrentPage(parseInt(urlPage)));
@@ -122,10 +126,13 @@ export default function MoviesClient() {
           })
         );
       }
+      if (urlShowUnrecorded && urlShowUnrecorded !== (showUnrecordedFilter ? "true" : "false")) {
+        dispatch(setShowUnrecordedFilter(urlShowUnrecorded === "true"));
+      }
 
       setUrlSyncInitialized(true);
     }
-  }, [searchParams, dispatch, urlSyncInitialized, currentPage, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter]);
+  }, [searchParams, dispatch, urlSyncInitialized, currentPage, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, showUnrecordedFilter]);
 
   // Update URL when filters change (after initial sync)
   useEffect(() => {
@@ -199,20 +206,26 @@ export default function MoviesClient() {
         params.delete("runtimeMax");
       }
 
+      if (showUnrecordedFilter !== null) {
+        params.set("showUnrecorded", showUnrecordedFilter.toString());
+      } else {
+        params.delete("showUnrecorded");
+      }
+
       const newUrl = `/videos?${params.toString()}`;
       if (newUrl !== `/videos?${searchParams.toString()}`) {
         router.replace(newUrl);
       }
     }
-  }, [urlSyncInitialized, currentPage, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, router, searchParams]);
+  }, [urlSyncInitialized, currentPage, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, showUnrecordedFilter, router, searchParams]);
 
   // Fetch movies on component mount and when filters change
   useEffect(() => {
     if (urlSyncInitialized) {
       dispatch(
         fetchMovies({
-          page: currentPage,
-          limit: moviesPerPage,
+          page: 1, // Always fetch from page 1
+          limit: 1000, // Fetch a large number to get all movies for client-side pagination
           searchQuery: searchQuery || undefined,
           sortBy,
           sortOrder,
@@ -223,10 +236,11 @@ export default function MoviesClient() {
           runtimeMax: runtimeFilter.max || undefined,
           ratingMin: ratingFilter.min || undefined,
           ratingMax: ratingFilter.max || undefined,
+          showUnrecorded: showUnrecordedFilter || undefined,
         })
       );
     }
-  }, [dispatch, urlSyncInitialized, currentPage, moviesPerPage, searchQuery, sortBy, sortOrder, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter]);
+  }, [dispatch, urlSyncInitialized, searchQuery, sortBy, sortOrder, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter, showUnrecordedFilter]);
 
   // Debounced handlers for isolated text fields
   const handleDebouncedSearchChange = (value: string) => {
@@ -341,6 +355,9 @@ export default function MoviesClient() {
     if (newFilters.ratingMin !== undefined || newFilters.ratingMax !== undefined) {
       dispatch(setRatingFilter({ min: newFilters.ratingMin, max: newFilters.ratingMax }));
     }
+    if (newFilters.showUnrecorded !== undefined) {
+      dispatch(setShowUnrecordedFilter(newFilters.showUnrecorded));
+    }
   };
 
   const handleClearFilters = () => {
@@ -350,20 +367,57 @@ export default function MoviesClient() {
     dispatch(setGenreFilter(null));
     dispatch(setRuntimeFilter({ min: null, max: null }));
     dispatch(setRatingFilter({ min: null, max: null }));
+    dispatch(setShowUnrecordedFilter(null));
   };
 
   const hasCompleteData = (movie: any) => {
     return movie.title && movie.description && movie.score !== undefined && movie.release_date;
   };
 
-  const totalPages = Math.ceil(totalMovies / moviesPerPage);
+  // Filter movies based on showUnrecorded state
+  const filteredMovies = movies.filter((movie) => {
+    const isUnrecorded = movie.id.startsWith("temp_");
+    if (showUnrecordedFilter === true) {
+      // Show only unrecorded movies
+      return isUnrecorded;
+    } else {
+      // Default: hide unrecorded movies (show only recorded movies)
+      return !isUnrecorded;
+    }
+  });
+
+  // Debug logging to understand what's happening
+  React.useEffect(() => {
+    console.log("Movies Debug:", {
+      totalMovies: movies.length,
+      showUnrecordedFilter,
+      filteredMovies: filteredMovies.length,
+      recordedMovies: movies.filter((m) => !m.id.startsWith("temp_")).length,
+      unrecordedMovies: movies.filter((m) => m.id.startsWith("temp_")).length,
+      urlSyncInitialized,
+    });
+  }, [movies, showUnrecordedFilter, filteredMovies.length, urlSyncInitialized]);
+
+  // Calculate pagination based on filtered results
+  const totalFilteredMovies = filteredMovies.length;
+  const totalPages = Math.ceil(totalFilteredMovies / moviesPerPage);
+  const startIndex = (currentPage - 1) * moviesPerPage;
+  const endIndex = startIndex + moviesPerPage;
+  const paginatedMovies = filteredMovies.slice(startIndex, endIndex);
+
+  // Reset to page 1 if current page exceeds total pages
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      dispatch(setCurrentPage(1));
+    }
+  }, [currentPage, totalPages, dispatch]);
 
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Movies ({totalMovies})
+          Movies ({totalFilteredMovies})
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => dispatch(setShowCreateForm(true))}>
           Add Movie
@@ -433,7 +487,7 @@ export default function MoviesClient() {
           mb: 4,
         }}
       >
-        {movies.map((movie) => (
+        {paginatedMovies.map((movie) => (
           <Card
             key={movie.id}
             sx={{

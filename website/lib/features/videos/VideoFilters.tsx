@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Box, FormControl, InputLabel, Select, MenuItem, Typography, Chip, Button, Card, CardContent, Collapse, IconButton, Autocomplete, TextField } from "@mui/material";
+import { Box, FormControl, InputLabel, Select, MenuItem, Typography, Chip, Button, Card, CardContent, Collapse, IconButton, Autocomplete, TextField, FormControlLabel, Checkbox } from "@mui/material";
 import { FilterList, ExpandMore, ExpandLess, Clear, Update } from "@mui/icons-material";
 import { useSearchParams } from "next/navigation";
 
@@ -14,6 +14,7 @@ interface VideoFiltersProps {
     runtimeMax: number | null;
     ratingMin: number | null;
     ratingMax: number | null;
+    showUnrecorded?: boolean | null;
   };
   filterOptions: {
     actors: string[];
@@ -21,7 +22,7 @@ interface VideoFiltersProps {
     years: string[];
   };
   onFilterChange: (filterType: string, value: any) => void;
-  onBatchFilterUpdate: (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null }) => void;
+  onBatchFilterUpdate: (filters: { year?: string | null; actor?: string[] | null; genre?: string[] | null; runtimeMin?: number | null; runtimeMax?: number | null; ratingMin?: number | null; ratingMax?: number | null; showUnrecorded?: boolean | null }) => void;
   onClearFilters: () => void;
 }
 
@@ -68,6 +69,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     const urlRuntimeMax = searchParams.get("runtimeMax");
     const urlRatingMin = searchParams.get("ratingMin");
     const urlRatingMax = searchParams.get("ratingMax");
+    const urlShowUnrecorded = searchParams.get("showUnrecorded");
 
     // 'arse runtime values, treating null/undefined a' null, bu' preserving 0 as valid
     const runtimeMin = urlRuntimeMin !== null ? parseInt(urlRuntimeMin) : null;
@@ -84,6 +86,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
       genre: urlGenre ? urlGenre.split(",") : null,
       runtime: currentRuntimeRange?.value || "All",
       rating: currentRatingRange?.value || "All",
+      showUnrecorded: urlShowUnrecorded === "true",
     };
   };
 
@@ -94,7 +97,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     setLocalFilters(getCurrentURLFilters());
   }, [searchParams]);
 
-  const hasActiveFilters = filters.year !== null || (filters.actor !== null && filters.actor.length > 0) || (filters.genre !== null && filters.genre.length > 0) || filters.runtimeMin !== null || filters.runtimeMax !== null || filters.ratingMin !== null || filters.ratingMax !== null;
+  const hasActiveFilters =
+    filters.year !== null || (filters.actor !== null && filters.actor.length > 0) || (filters.genre !== null && filters.genre.length > 0) || filters.runtimeMin !== null || filters.runtimeMax !== null || filters.ratingMin !== null || filters.ratingMax !== null || filters.showUnrecorded !== null;
 
   const activeFiltersCount = [
     filters.year,
@@ -102,6 +106,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     filters.genre && filters.genre.length > 0 ? filters.genre : null,
     filters.runtimeMin !== null || filters.runtimeMax !== null ? "runtime" : null,
     filters.ratingMin !== null || filters.ratingMax !== null ? "rating" : null,
+    filters.showUnrecorded !== null ? "showUnrecorded" : null,
   ].filter(Boolean).length;
 
   const hasLocalChanges = () => {
@@ -115,7 +120,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
     const urlActor = urlFilters.actor ? urlFilters.actor.join(",") : null;
     const urlGenre = urlFilters.genre ? urlFilters.genre.join(",") : null;
 
-    return localYear !== urlYear || localActor !== urlActor || localGenre !== urlGenre || localFilters.runtime !== urlFilters.runtime || localFilters.rating !== urlFilters.rating;
+    return localYear !== urlYear || localActor !== urlActor || localGenre !== urlGenre || localFilters.runtime !== urlFilters.runtime || localFilters.rating !== urlFilters.rating || localFilters.showUnrecorded !== urlFilters.showUnrecorded;
   };
 
   const handleLocalFilterChange = (filterType: string, value: any) => {
@@ -134,6 +139,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
       runtimeMax: selectedRuntimeRange?.max ?? null,
       ratingMin: selectedRatingRange?.min ?? null,
       ratingMax: selectedRatingRange?.max ?? null,
+      showUnrecorded: localFilters.showUnrecorded ? true : null,
     });
   };
 
@@ -144,6 +150,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
       genre: null,
       runtime: "",
       rating: "",
+      showUnrecorded: false,
     });
     onClearFilters();
   };
@@ -176,7 +183,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr 1fr" },
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr 1fr 1fr" },
                 gap: 2,
                 mb: 2,
               }}
@@ -222,6 +229,8 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
                   ))}
                 </Select>
               </FormControl>
+
+              <FormControlLabel control={<Checkbox checked={localFilters.showUnrecorded || false} onChange={(e) => handleLocalFilterChange("showUnrecorded", e.target.checked)} size="small" />} label="Show Unrecorded" sx={{ alignSelf: "center" }} />
             </Box>
 
             <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
@@ -263,6 +272,7 @@ export default function VideoFilters({ filters, filterOptions, onFilterChange, o
                       variant="outlined"
                     />
                   )}
+                  {filters.showUnrecorded && <Chip size="small" label="Show Unrecorded" onDelete={() => onFilterChange("showUnrecorded", null)} color="primary" variant="outlined" />}
                 </Box>
               </Box>
             )}

@@ -70,6 +70,7 @@ interface TVShowsState {
   genreFilter: string[] | null;
   runtimeFilter: { min: number | null; max: number | null };
   ratingFilter: { min: number | null; max: number | null };
+  showUnrecordedFilter: boolean | null;
   searchQuery: string | null;
   sortBy: "air_date" | "episode_number" | "rating";
   sortOrder: "asc" | "desc";
@@ -107,9 +108,10 @@ const initialState: TVShowsState = {
   genreFilter: null,
   runtimeFilter: { min: null, max: null },
   ratingFilter: { min: null, max: null },
+  showUnrecordedFilter: null,
   searchQuery: null,
   sortBy: "air_date",
-  sortOrder: "desc",
+  sortOrder: "asc",
   loading: false,
   error: null,
   showCreateForm: false,
@@ -146,12 +148,13 @@ export const fetchTVShows = createAsyncThunk(
       runtimeMax?: number;
       ratingMin?: number;
       ratingMax?: number;
+      showUnrecorded?: boolean;
       searchQuery?: string;
       sortBy?: string;
       sortOrder?: string;
     } = {}
   ) => {
-    const { page = 1, limit = 12, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, searchQuery, sortBy = "air_date", sortOrder = "desc" } = params;
+    const { page = 1, limit = 12, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, showUnrecorded, searchQuery, sortBy = "air_date", sortOrder = "desc" } = params;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const searchParams = new URLSearchParams({
@@ -176,6 +179,7 @@ export const fetchTVShows = createAsyncThunk(
     if (runtimeMax !== undefined && runtimeMax !== null) searchParams.append("runtimeMax", runtimeMax.toString());
     if (ratingMin !== undefined && ratingMin !== null) searchParams.append("ratingMin", ratingMin.toString());
     if (ratingMax !== undefined && ratingMax !== null) searchParams.append("ratingMax", ratingMax.toString());
+    if (showUnrecorded !== undefined && showUnrecorded !== null) searchParams.append("showUnrecorded", showUnrecorded.toString());
     if (searchQuery) searchParams.append("search", searchQuery);
 
     const response = await fetch(`${baseUrl}/api/videos/tv?${searchParams}`);
@@ -273,6 +277,10 @@ const tvShowsSlice = createSlice({
     },
     setRatingFilter: (state, action: PayloadAction<{ min: number | null; max: number | null }>) => {
       state.ratingFilter = action.payload;
+      state.currentPage = 1;
+    },
+    setShowUnrecordedFilter: (state, action: PayloadAction<boolean | null>) => {
+      state.showUnrecordedFilter = action.payload;
       state.currentPage = 1;
     },
     setSearchQuery: (state, action: PayloadAction<string | null>) => {
@@ -392,6 +400,7 @@ export const {
   setGenreFilter,
   setRuntimeFilter,
   setRatingFilter,
+  setShowUnrecordedFilter,
   setSearchQuery,
   setSortBy,
   setSortOrder,

@@ -16,6 +16,7 @@ import {
   setGenreFilter,
   setRuntimeFilter,
   setRatingFilter,
+  setShowUnrecordedFilter,
   setSearchQuery,
   setSortBy,
   setSortOrder,
@@ -50,8 +51,10 @@ import {
   Rating,
   Collapse,
   IconButton,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
-import { Add, Edit, Delete, Search, ExpandMore, ExpandLess, Tv } from "@mui/icons-material";
+import { Add, Edit, Delete, Search, ExpandMore, ExpandLess, Tv, PlayArrow } from "@mui/icons-material";
 import IsolatedTextField from "@/lib/components/IsolatedTextField";
 import VideoForm from "@/lib/features/videos/VideoForm";
 import VideoFilters from "@/lib/features/videos/VideoFilters";
@@ -65,6 +68,7 @@ export default function TVShowsClient() {
   // Local state for advanced info
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [urlSyncInitialized, setUrlSyncInitialized] = useState(false);
+  const [showsOverviewOpen, setShowsOverviewOpen] = useState(false);
 
   // Memoized selectors for specific state pieces
   const episodes = useSelector((state: RootState) => state.tvShows.episodes);
@@ -83,6 +87,7 @@ export default function TVShowsClient() {
   const genreFilter = useSelector((state: RootState) => state.tvShows.genreFilter);
   const runtimeFilter = useSelector((state: RootState) => state.tvShows.runtimeFilter);
   const ratingFilter = useSelector((state: RootState) => state.tvShows.ratingFilter);
+  const showUnrecordedFilter = useSelector((state: RootState) => state.tvShows.showUnrecordedFilter);
   const searchQuery = useSelector((state: RootState) => state.tvShows.searchQuery);
   const sortBy = useSelector((state: RootState) => state.tvShows.sortBy);
   const sortOrder = useSelector((state: RootState) => state.tvShows.sortOrder);
@@ -97,6 +102,7 @@ export default function TVShowsClient() {
     runtimeMax: runtimeFilter.max,
     ratingMin: ratingFilter.min,
     ratingMax: ratingFilter.max,
+    showUnrecorded: showUnrecordedFilter,
   };
 
   // Initialize filters from URL on component mount
@@ -115,6 +121,7 @@ export default function TVShowsClient() {
       const urlRatingMax = searchParams.get("ratingMax");
       const urlRuntimeMin = searchParams.get("runtimeMin");
       const urlRuntimeMax = searchParams.get("runtimeMax");
+      const urlShowUnrecorded = searchParams.get("showUnrecorded");
 
       if (urlPage && parseInt(urlPage) !== currentPage) {
         dispatch(setCurrentPage(parseInt(urlPage)));
@@ -161,10 +168,13 @@ export default function TVShowsClient() {
           })
         );
       }
+      if (urlShowUnrecorded && urlShowUnrecorded !== (showUnrecordedFilter ? "true" : "false")) {
+        dispatch(setShowUnrecordedFilter(urlShowUnrecorded === "true"));
+      }
 
       setUrlSyncInitialized(true);
     }
-  }, [searchParams, dispatch, urlSyncInitialized, currentPage, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter]);
+  }, [searchParams, dispatch, urlSyncInitialized, currentPage, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, showUnrecordedFilter]);
 
   // Update URL when filters change (after initial sync)
   useEffect(() => {
@@ -250,20 +260,26 @@ export default function TVShowsClient() {
         params.delete("runtimeMax");
       }
 
+      if (showUnrecordedFilter !== null) {
+        params.set("showUnrecorded", showUnrecordedFilter.toString());
+      } else {
+        params.delete("showUnrecorded");
+      }
+
       const newUrl = `/videos?${params.toString()}`;
       if (newUrl !== `/videos?${searchParams.toString()}`) {
         router.replace(newUrl);
       }
     }
-  }, [urlSyncInitialized, currentPage, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, router, searchParams]);
+  }, [urlSyncInitialized, currentPage, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, searchQuery, sortBy, sortOrder, ratingFilter, runtimeFilter, showUnrecordedFilter, router, searchParams]);
 
   // Fetch TV shows on component mount and when filters change
   useEffect(() => {
     if (urlSyncInitialized) {
       dispatch(
         fetchTVShows({
-          page: currentPage,
-          limit: episodesPerPage,
+          page: 1, // Always fetch from page 1
+          limit: 1000, // Fetch a large number to get all episodes for client-side pagination
           showFilter: showFilter || undefined,
           seasonFilter: seasonFilter || undefined,
           yearFilter: yearFilter || undefined,
@@ -273,13 +289,14 @@ export default function TVShowsClient() {
           runtimeMax: runtimeFilter.max || undefined,
           ratingMin: ratingFilter.min || undefined,
           ratingMax: ratingFilter.max || undefined,
+          showUnrecorded: showUnrecordedFilter || undefined,
           searchQuery: searchQuery || undefined,
           sortBy,
           sortOrder,
         })
       );
     }
-  }, [dispatch, urlSyncInitialized, currentPage, episodesPerPage, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter, searchQuery, sortBy, sortOrder]);
+  }, [dispatch, urlSyncInitialized, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, runtimeFilter, ratingFilter, showUnrecordedFilter, searchQuery, sortBy, sortOrder]);
 
   // Debounced handlers for isolated text fields
   const handleDebouncedSearchChange = (value: string) => {
@@ -397,6 +414,9 @@ export default function TVShowsClient() {
     if (newFilters.ratingMin !== undefined || newFilters.ratingMax !== undefined) {
       dispatch(setRatingFilter({ min: newFilters.ratingMin, max: newFilters.ratingMax }));
     }
+    if (newFilters.showUnrecorded !== undefined) {
+      dispatch(setShowUnrecordedFilter(newFilters.showUnrecorded));
+    }
   };
 
   const handleClearFilters = () => {
@@ -406,20 +426,58 @@ export default function TVShowsClient() {
     dispatch(setGenreFilter(null));
     dispatch(setRuntimeFilter({ min: null, max: null }));
     dispatch(setRatingFilter({ min: null, max: null }));
+    dispatch(setShowUnrecordedFilter(null));
   };
 
   const hasCompleteData = (episode: any) => {
     return episode.title && episode.description && episode.score !== undefined && episode.air_date;
   };
 
-  const totalPages = Math.ceil(totalEpisodes / episodesPerPage);
+  // Filter episodes based on showUnrecorded state
+  const filteredEpisodes = episodes.filter((episode) => {
+    const isUnrecorded = episode.id.startsWith("temp_");
+    if (showUnrecordedFilter === true) {
+      // Show only unrecorded episodes
+      return isUnrecorded;
+    } else {
+      // Default: hide unrecorded episodes (show only recorded episodes)
+      return !isUnrecorded;
+    }
+  });
+
+  // Debug logging to understand what's happening
+  React.useEffect(() => {
+    console.log("TV Shows Debug:", {
+      totalEpisodes: episodes.length,
+      showUnrecordedFilter,
+      filteredEpisodes: filteredEpisodes.length,
+      recordedEpisodes: episodes.filter((ep) => !ep.id.startsWith("temp_")).length,
+      unrecordedEpisodes: episodes.filter((ep) => ep.id.startsWith("temp_")).length,
+      showFilter,
+      urlSyncInitialized,
+    });
+  }, [episodes, showUnrecordedFilter, filteredEpisodes.length, showFilter, urlSyncInitialized]);
+
+  // Calculate pagination based on filtered results
+  const totalFilteredEpisodes = filteredEpisodes.length;
+  const totalPages = Math.ceil(totalFilteredEpisodes / episodesPerPage);
+  const startIndex = (currentPage - 1) * episodesPerPage;
+  const endIndex = startIndex + episodesPerPage;
+  const paginatedEpisodes = filteredEpisodes.slice(startIndex, endIndex);
+
+  // Reset to page 1 if current page exceeds total pages
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      dispatch(setCurrentPage(1));
+    }
+  }, [currentPage, totalPages, dispatch]);
 
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" component="h1">
-          TV Shows ({totalEpisodes} episodes)
+          TV Shows ({totalFilteredEpisodes} episodes)
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => dispatch(setShowCreateForm(true))}>
           Add Episode
@@ -444,18 +502,8 @@ export default function TVShowsClient() {
             />
           </Box>
 
-          <Box sx={{ minWidth: 150 }}>
-            <FormControl fullWidth>
-              <InputLabel>Show</InputLabel>
-              <Select value={showFilter || ""} label="Show" onChange={(e) => dispatch(setShowFilter(e.target.value || null))}>
-                <MenuItem value="">All Shows</MenuItem>
-                {filterOptions.shows.map((show) => (
-                  <MenuItem key={show} value={show}>
-                    {show}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          <Box sx={{ minWidth: 200 }}>
+            <Autocomplete value={showFilter || null} onChange={(event, newValue) => dispatch(setShowFilter(newValue))} options={filterOptions.shows} renderInput={(params) => <TextField {...params} label="Show" />} size="small" />
           </Box>
 
           <Box sx={{ minWidth: 120 }}>
@@ -463,11 +511,26 @@ export default function TVShowsClient() {
               <InputLabel>Season</InputLabel>
               <Select value={seasonFilter || ""} label="Season" onChange={(e) => dispatch(setSeasonFilter(e.target.value ? Number(e.target.value) : null))}>
                 <MenuItem value="">All Seasons</MenuItem>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((season) => (
-                  <MenuItem key={season} value={season}>
-                    Season {season}
-                  </MenuItem>
-                ))}
+                {(() => {
+                  if (showFilter) {
+                    // Show seasons for the selected show
+                    const selectedShow = shows.find((show) => show.name === showFilter);
+                    return (
+                      selectedShow?.seasons.map((season) => (
+                        <MenuItem key={season.seasonNumber} value={season.seasonNumber}>
+                          Season {season.seasonNumber} ({season.episodeCount} episodes)
+                        </MenuItem>
+                      )) || []
+                    );
+                  } else {
+                    // Show all possible seasons when no show is selected
+                    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((season) => (
+                      <MenuItem key={season} value={season}>
+                        Season {season}
+                      </MenuItem>
+                    ));
+                  }
+                })()}
               </Select>
             </FormControl>
           </Box>
@@ -512,34 +575,9 @@ export default function TVShowsClient() {
       {/* Shows Hierarchy View */}
       {shows.length > 0 && !showFilter && (
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Shows Overview
-          </Typography>
-          {shows.map((show) => (
-            <Accordion key={show.name} sx={{ mb: 1 }}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">
-                  {show.name} ({show.totalEpisodes} episodes)
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  {show.seasons.map((season) => (
-                    <Chip
-                      key={season.seasonNumber}
-                      label={`Season ${season.seasonNumber} (${season.episodeCount})`}
-                      onClick={() => {
-                        dispatch(setShowFilter(show.name));
-                        dispatch(setSeasonFilter(season.seasonNumber));
-                      }}
-                      clickable
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+          <Button variant="outlined" startIcon={<Tv />} onClick={() => setShowsOverviewOpen(true)} sx={{ mb: 2 }}>
+            Overview ({shows.length} shows)
+          </Button>
         </Box>
       )}
 
@@ -552,7 +590,7 @@ export default function TVShowsClient() {
           mb: 4,
         }}
       >
-        {episodes.map((episode) => (
+        {paginatedEpisodes.map((episode) => (
           <Card
             key={episode.id}
             sx={{
@@ -719,6 +757,45 @@ export default function TVShowsClient() {
               return <VideoForm video={videoRecord} onSubmit={handleUpdateEpisode} onCancel={handleCancelEdit} mode="edit" type="tv" />;
             })()}
         </DialogContent>
+      </Dialog>
+
+      {/* Shows Overview Dialog */}
+      <Dialog open={showsOverviewOpen} onClose={() => setShowsOverviewOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Tv />
+            Shows Overview ({shows.length} shows)
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {shows.map((show) => (
+              <Box key={show.name} sx={{ p: 2, border: "1px solid #e0e0e0", borderRadius: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  {show.name} ({show.totalEpisodes} episodes)
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {show.seasons.map((season) => (
+                    <Chip
+                      key={season.seasonNumber}
+                      label={`Season ${season.seasonNumber} (${season.episodeCount})`}
+                      onClick={() => {
+                        dispatch(setShowFilter(show.name));
+                        dispatch(setSeasonFilter(season.seasonNumber));
+                        setShowsOverviewOpen(false);
+                      }}
+                      clickable
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowsOverviewOpen(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

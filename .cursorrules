@@ -3,3 +3,4 @@ The website directory is the root directory for the website.
 The content-server directory is the root directory for the content server that stores the videos, images, and files for the website.
 content-server is loaded with npm run dev in the content-server directory.
 The website is loaded with npm run dev in the website directory.
+Any react components should opt to use Redux for state management, instead of useState functionality. The Redux store is in the website/lib/store/store.ts file. When needed, please create new folders for websites to keep slices organized and well separated for organization.
