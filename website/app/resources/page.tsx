@@ -8,6 +8,7 @@ const resourceLinks = [
   { href: "/resources/decision_helper", primary: "Decision Helper" },
   { href: "/resources/ai_emailer", primary: "AI Emailer" },
   { href: "/resources/ai_messenger", primary: "AI Messenger Profiles" },
+  { href: "/resources/image_analyzer", primary: "Image Analyzer" },
   { href: "/resources/admin", primary: "Administration Tasks" },
   // Add other resource links here
 ];

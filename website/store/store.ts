@@ -4,6 +4,7 @@ import aiMessengerReducer from "./aiMessengerSlice";
 import decisionHelperReducer from "./decision_helper/decisionHelperSlice";
 import moviesReducer from "./moviesSlice";
 import tvShowsReducer from "./tvShowsSlice";
+import imageAnalyzerReducer from "./imageAnalyzerSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     decisionHelper: decisionHelperReducer,
     movies: moviesReducer,
     tvShows: tvShowsReducer,
+    imageAnalyzer: imageAnalyzerReducer,
   },
 });
 

@@ -1,6 +1,14 @@
+website (frontend)
 You will need to use the IsolatedTextField.tsx component in the website/lib/components folder, instead of <TextField> components to make sure data loads efficiently.
 The website directory is the root directory for the website.
-The content-server directory is the root directory for the content server that stores the videos, images, and files for the website.
-content-server is loaded with npm run dev in the content-server directory.
 The website is loaded with npm run dev in the website directory.
 Any react components should opt to use Redux for state management, instead of useState functionality. The Redux store is in the website/lib/store/store.ts file. When needed, please create new folders for websites to keep slices organized and well separated for organization.
+For <Grid> components, use the size prop to specify the size of the component. For example, <Grid size={{ xs: 12, sm: 6 }}> will create a component that is 12 columns wide on extra-small screens and 6 columns wide on small screens. And <Grid item xs={12} sm={6}> will create an error because it is not using the size prop, and it has an item prop which is not needed.
+
+api (backend 1)
+The api directory in website/app/api, and manages the data from MongoDB that stores a lot of information on our website
+It references the mongoDB database through the website/lib/server/mongodb.ts file, and the chatgpt-api through the website/lib/server/chatgpt.ts file.
+
+content-server (backend 2)
+The content-server directory is the root directory for the content server that stores the videos, images, and files for the website.
+content-server is loaded with npm run dev in the content-server directory.
