@@ -1,0 +1,85 @@
+.nav {
+  width: 100%;
+  padding: 1rem 2rem;
+  background-color: var(--background);
+  border-bottom: 1px solid var(--gray-alpha-200);
+}
+
+.nav > ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+}
+
+.nav a {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.nav a:hover {
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav a:hover {
+    color: #999;
+  }
+}
+
+.nav li {
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdownToggle {
+  text-decoration: none;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.dropdownContent {
+  display: none;
+  position: absolute;
+  background-color: var(--background);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdownContent li {
+  display: block;
+  margin: 0;
+}
+
+.dropdownContent li a {
+  color: var(--foreground);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdownContent li a:hover {
+  background-color: var(--gray-alpha-200);
+}
+
+.dropdown:hover .dropdownContent {
+  display: block;
+}
+
+.active {
+  font-weight: bold;
+}

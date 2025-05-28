@@ -1,0 +1,390 @@
+.container {
+  min-height: calc(100vh - 70px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 2rem 0;
+}
+
+.content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  text-align: center;
+  color: #666;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.categorySelector {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.dropdown {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 10px;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  color: #333;
+}
+
+.dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.resultMessage {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  border-left: 5px solid;
+}
+
+.resultMessage.success {
+  border-left-color: #28a745;
+  background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+}
+
+.resultMessage.error {
+  border-left-color: #dc3545;
+  background: linear-gradient(135deg, #fff8f8 0%, #f5e8e8 100%);
+}
+
+.resultMessage h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.resultMessage p {
+  margin: 0 0 1rem 0;
+  color: #666;
+}
+
+.copiedFiles,
+.errorList {
+  margin-top: 1rem;
+}
+
+.copiedFiles h4,
+.errorList h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.copiedFiles ul,
+.errorList ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.copiedFiles li {
+  color: #28a745;
+  margin-bottom: 0.25rem;
+}
+
+.errorList li {
+  color: #dc3545;
+  margin-bottom: 0.25rem;
+}
+
+.configurationPlaceholder {
+  background: white;
+  padding: 3rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.configurationPlaceholder h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.configurationPlaceholder p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.itemsSection {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.selectionControls {
+  padding: 1.5rem 2rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #333;
+}
+
+.controlButton {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.controlButton:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.selectedCount {
+  color: #666;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.itemsList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.item {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.item:hover {
+  background-color: #f8f9fa;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemLabel {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  cursor: pointer;
+  gap: 1rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.itemDescription {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.downloadSection {
+  padding: 2rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.downloadButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  margin-bottom: 1rem;
+}
+
+.downloadButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.downloadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.integrationNote {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem 0;
+  }
+
+  .content {
+    padding: 0 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .categorySelector {
+    padding: 1.5rem;
+  }
+
+  .resultMessage {
+    padding: 1.5rem;
+  }
+
+  .selectionControls {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selectedCount {
+    margin-left: 0;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .itemLabel {
+    padding: 1rem;
+  }
+
+  .downloadSection {
+    padding: 1.5rem;
+  }
+
+  .downloadButton {
+    width: 100%;
+  }
+}
+
+.routeInfo {
+  margin: 8px 0;
+  padding: 8px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 6px;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.navInfo {
+  margin: 8px 0;
+  padding: 8px 16px;
+  background: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 6px;
+  color: #1565c0;
+  font-weight: 500;
+}
+
+.routeConfig {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.routeLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.routeInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.routeInput:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.routeInputError {
+  border-color: #f44336;
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+}
+
+.routeHelp {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
+}

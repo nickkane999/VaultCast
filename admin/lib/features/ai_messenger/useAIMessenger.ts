@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { createProfile, deleteProfile, setShowCreateForm, setEditingProfileId, updateProfile, fetchProfiles, fetchAvailableFiles, setQuestion, setAiResponse, setChatLoading, sendMessageToAI, updateEditForm, clearEditForm } from "./store/aiMessengerSlice";
+import { createProfile, deleteProfile, setShowCreateForm, setEditingProfileId, updateProfile, fetchProfiles, fetchAvailableFiles, setQuestion, setAiResponse, setChatLoading, sendMessageToAI, updateEditForm, clearEditForm } from "@/store/aiMessengerSlice";
 import { MessageProfile } from "./types";
 import { useEffect } from "react";
 

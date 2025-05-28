@@ -1,0 +1,114 @@
+.uploadZone {
+  transition: all 0.3s ease;
+}
+
+.uploadZone:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.dragOver {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.1), rgba(25, 118, 210, 0.05));
+  border-color: #1976d2 !important;
+  transform: scale(1.02);
+}
+
+.imagePreview {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.imagePreview:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.categoryChip {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.categoryChip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.analysisCard {
+  transition: all 0.3s ease;
+}
+
+.analysisCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.resultAccordion {
+  border-radius: 12px !important;
+  margin-bottom: 16px !important;
+  overflow: hidden;
+}
+
+.resultAccordion::before {
+  display: none;
+}
+
+.loadingSpinner {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.heroSection {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.featureCard {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glowEffect {
+  box-shadow: 0 0 20px rgba(25, 118, 210, 0.3);
+  border: 2px solid rgba(25, 118, 210, 0.5);
+}

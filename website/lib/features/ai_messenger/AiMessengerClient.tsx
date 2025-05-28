@@ -2,13 +2,13 @@
 
 import React, { useEffect, useTransition, useState } from "react";
 import { Container, Box, Typography, Button, CircularProgress, Alert } from "@mui/material";
-import MessengerProfileCard from "@/lib/features/ai_messenger/MessengerProfileCard";
-import ProfileForm from "@/lib/features/ai_messenger/ProfileForm";
+import MessengerProfileCard from "./MessengerProfileCard";
+import ProfileForm from "./ProfileForm";
 import { Provider, useDispatch } from "react-redux";
 import { store } from "@/store/store";
-import { useAiMessengerPage } from "@/lib/features/ai_messenger/useAIMessenger";
-import { MessageProfile } from "@/lib/features/ai_messenger/types";
-import { setProfiles, setAvailableFiles } from "@/store/aiMessengerSlice";
+import { useAiMessengerPage } from "./useAIMessenger";
+import { MessageProfile } from "./types";
+import { setProfiles, setAvailableFiles } from "./store/aiMessengerSlice";
 
 interface AiMessengerData {
   profiles: MessageProfile[];
