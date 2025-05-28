@@ -1,13 +1,9 @@
-// Redux store configuration
 import { configureStore } from '@reduxjs/toolkit';
-
-// Import feature slices here as you add them
-// Example: import exampleSlice from '../lib/features/example/exampleSlice';
+import aiMessengerReducer from '@/lib/features/ai_messenger/store/aiMessengerSlice';
 
 export const store = configureStore({
   reducer: {
-    // Add your feature reducers here
-    // example: exampleSlice,
+    aiMessenger: aiMessengerReducer,
   },
 });
 

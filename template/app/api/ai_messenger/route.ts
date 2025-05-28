@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     // Create streaming response
     const stream = await openaiClient.chat.completions.create({
-      model: model || "gpt-4.1-nano",
+      model: model || "gpt-4o-nano",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: question },

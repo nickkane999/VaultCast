@@ -10,12 +10,22 @@ interface DownloadItem {
   hasPage?: boolean;
 }
 
+interface ProgressStep {
+  step: string;
+  status: "started" | "completed" | "skipped" | "error";
+  details?: string;
+  data?: any;
+  timestamp: number;
+}
+
 interface IntegrationResult {
   success: boolean;
   message: string;
   copiedFiles: string[];
   pageRoute?: string;
   navigationUpdated?: boolean;
+  packagesInstalled?: string[];
+  apiRoutesCopied?: string[];
   errors?: string[];
 }
 
@@ -38,18 +48,54 @@ const features: DownloadItem[] = [
   { name: "admin", description: "Administrative tools and interfaces", type: "feature", hasPage: true },
 ];
 
+const getStepIcon = (status: string) => {
+  switch (status) {
+    case "started":
+      return "🔄";
+    case "completed":
+      return "✅";
+    case "skipped":
+      return "⏭️";
+    case "error":
+      return "❌";
+    default:
+      return "⏸️";
+  }
+};
+
+const getStepTitle = (step: string) => {
+  const titles: Record<string, string> = {
+    initialization: "Initializing Integration",
+    server_services: "Copying Server & Services",
+    feature_copy: "Copying Feature Files",
+    packages: "Installing Packages",
+    api_routes: "Creating API Routes",
+    store: "Configuring Redux Store",
+    page: "Creating Page",
+    index_pages: "Creating Index Pages",
+    navigation: "Updating Navigation",
+    completion: "Integration Complete",
+    error: "Integration Error",
+  };
+  return titles[step] || step;
+};
+
 export default function DownloadPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isIntegrating, setIsIntegrating] = useState(false);
   const [integrationResult, setIntegrationResult] = useState<IntegrationResult | null>(null);
   const [routeConfigs, setRouteConfigs] = useState<Record<string, string>>({});
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+  const [currentStep, setCurrentStep] = useState<string>("");
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedItems(new Set());
     setIntegrationResult(null);
     setRouteConfigs({});
+    setProgressSteps([]);
+    setCurrentStep("");
   };
 
   const handleItemToggle = (itemName: string) => {
@@ -110,6 +156,8 @@ export default function DownloadPage() {
 
     setIsIntegrating(true);
     setIntegrationResult(null);
+    setProgressSteps([]);
+    setCurrentStep("");
 
     try {
       const response = await fetch("/api/download", {
@@ -124,12 +172,55 @@ export default function DownloadPage() {
         }),
       });
 
-      const result = await response.json();
-      setIntegrationResult(result);
+      if (!response.body) {
+        throw new Error("No response body");
+      }
 
-      if (result.success) {
-        setSelectedItems(new Set());
-        setRouteConfigs({});
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              const progressStep: ProgressStep = {
+                ...data,
+                timestamp: Date.now(),
+              };
+
+              setProgressSteps((prev) => [...prev, progressStep]);
+              setCurrentStep(data.step);
+
+              if (data.step === "completion") {
+                setIntegrationResult({
+                  success: true,
+                  message: data.details,
+                  copiedFiles: [],
+                  pageRoute: undefined,
+                  navigationUpdated: false,
+                });
+                setSelectedItems(new Set());
+                setRouteConfigs({});
+              } else if (data.step === "error") {
+                setIntegrationResult({
+                  success: false,
+                  message: data.details,
+                  copiedFiles: [],
+                  errors: [data.details],
+                });
+              }
+            } catch (e) {
+              console.error("Error parsing progress data:", e);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Integration error:", error);
@@ -170,6 +261,37 @@ export default function DownloadPage() {
           </select>
         </div>
 
+        {/* Progress Display */}
+        {isIntegrating && progressSteps.length > 0 && (
+          <div className={styles.progressContainer}>
+            <h3 className={styles.progressTitle}>Integration Progress</h3>
+            <div className={styles.progressSteps}>
+              {progressSteps.map((step, index) => (
+                <div key={index} className={`${styles.progressStep} ${styles[step.status]}`}>
+                  <div className={styles.stepHeader}>
+                    <span className={styles.stepIcon}>{getStepIcon(step.status)}</span>
+                    <span className={styles.stepTitle}>{getStepTitle(step.step)}</span>
+                    <span className={styles.stepStatus}>{step.status}</span>
+                  </div>
+                  {step.details && <div className={styles.stepDetails}>{step.details}</div>}
+                  {step.data && step.data.installing && <div className={styles.stepData}>Installing: {step.data.installing.join(", ")}</div>}
+                  {step.data && step.data.installed && <div className={styles.stepData}>Installed: {step.data.installed.join(", ")}</div>}
+                  {step.data && step.data.skipped && <div className={styles.stepData}>Skipped: {step.data.skipped.join(", ")}</div>}
+                  {step.data && step.data.copied && step.data.copied.length > 0 && <div className={styles.stepData}>Created: {step.data.copied.join(", ")}</div>}
+                  {step.data && step.data.route && <div className={styles.stepData}>Route: {step.data.route}</div>}
+                  {step.data && step.data.path && <div className={styles.stepData}>Path: {step.data.path}</div>}
+                  {step.data && step.data.created && <div className={styles.stepData}>Created: {step.data.created}</div>}
+                  {step.data && step.data.structure && <div className={styles.stepData}>Sections: {step.data.structure.join(", ")}</div>}
+                  {step.data && step.data.topLevelSections && <div className={styles.stepData}>Navigation sections: {step.data.topLevelSections.map((s: any) => s.label).join(", ")}</div>}
+                  {step.data && step.data.serverFiles && step.data.serverFiles.length > 0 && <div className={styles.stepData}>Server files: {step.data.serverFiles.join(", ")}</div>}
+                  {step.data && step.data.serviceFiles && step.data.serviceFiles.length > 0 && <div className={styles.stepData}>Service files: {step.data.serviceFiles.join(", ")}</div>}
+                  {step.data && step.data.totalCopied !== undefined && <div className={styles.stepData}>Total copied: {step.data.totalCopied} files</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {integrationResult && (
           <div className={`${styles.resultMessage} ${integrationResult.success ? styles.success : styles.error}`}>
             <h3>{integrationResult.success ? "✅ Success!" : "❌ Error"}</h3>
@@ -180,6 +302,26 @@ export default function DownloadPage() {
               </p>
             )}
             {integrationResult.navigationUpdated && <p className={styles.navInfo}>🧭 Navigation automatically updated with new link</p>}
+            {integrationResult.packagesInstalled && integrationResult.packagesInstalled.length > 0 && (
+              <div className={styles.packageInfo}>
+                <h4>📦 Packages Installed:</h4>
+                <ul>
+                  {integrationResult.packagesInstalled.map((pkg) => (
+                    <li key={pkg}>{pkg}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {integrationResult.apiRoutesCopied && integrationResult.apiRoutesCopied.length > 0 && (
+              <div className={styles.apiInfo}>
+                <h4>🔗 API Routes Created:</h4>
+                <ul>
+                  {integrationResult.apiRoutesCopied.map((route) => (
+                    <li key={route}>{route}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {integrationResult.copiedFiles.length > 0 && (
               <div className={styles.copiedFiles}>
                 <h4>Integrated files:</h4>
@@ -256,7 +398,7 @@ export default function DownloadPage() {
 
             <div className={styles.downloadSection}>
               <button onClick={handleIntegrate} disabled={selectedItems.size === 0 || isIntegrating} className={styles.downloadButton}>
-                {isIntegrating ? "Integrating..." : `Integrate Selected (${selectedItems.size})`}
+                {isIntegrating ? `Integrating... (${currentStep || "Starting"})` : `Integrate Selected (${selectedItems.size})`}
               </button>
               <p className={styles.integrationNote}>{selectedCategory === "features" ? "Features will be integrated with working pages and navigation links" : "Components will be copied to your project's lib/components directory"}</p>
             </div>

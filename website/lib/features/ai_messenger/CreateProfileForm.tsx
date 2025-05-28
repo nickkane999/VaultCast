@@ -4,7 +4,7 @@ import React from "react";
 import { Button, TextField, Stack, Box, Autocomplete, Chip } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { setShowCreateForm, updateEditForm, clearEditForm, createProfile } from "@/store/aiMessengerSlice";
+import { setShowCreateForm, updateEditForm, clearEditForm, createProfile } from "./store/aiMessengerSlice";
 
 interface CreateProfileFormProps {
   onProfileAdded: (newProfile: { name: string; systemPrompt: string; files: string[] }) => void;

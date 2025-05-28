@@ -10,7 +10,7 @@ const Navigation = () => {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/download', label: 'Integrate' },
-    { href: '/tools/ai-messenger', label: 'Ai Messenger' }
+    { href: '/apps', label: 'Apps' }
   ];
 
   return (
@@ -22,7 +22,7 @@ const Navigation = () => {
         <ul className={styles.navItems}>
           {navItems.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} className={`${styles.navLink} ${pathname === item.href ? styles.active : ""}`}>
+              <Link href={item.href} className={`${styles.navLink} ${pathname.startsWith(item.href) && item.href !== '/' ? styles.active : pathname === item.href ? styles.active : ''}`}>
                 {item.label}
               </Link>
             </li>
