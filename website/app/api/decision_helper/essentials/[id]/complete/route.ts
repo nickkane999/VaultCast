@@ -3,10 +3,10 @@ import { getCollection } from "@/lib/server/mongodb";
 import { ObjectId } from "mongodb";
 import { parseISO, addDays, format } from "date-fns"; // Import date-fns functions
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const id = params.id;
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
 
+  try {
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid Essential ID" }, { status: 400 });
     }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       { status: 200 }
     );
   } catch (error: any) {
-    console.error(`Error completing essential with ID ${params.id}:`, error);
+    console.error(`Error completing essential with ID ${id}:`, error);
     return NextResponse.json({ error: "Failed to complete essential" }, { status: 500 });
   }
 }

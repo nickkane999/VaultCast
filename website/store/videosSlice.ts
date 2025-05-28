@@ -57,7 +57,7 @@ export const fetchVideos = createAsyncThunk(
   ) => {
     const { page = 1, limit = 12, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, searchQuery, sortBy = "release_date", sortOrder = "desc" } = params;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -89,7 +89,7 @@ export const fetchVideos = createAsyncThunk(
 );
 
 export const createVideoRecord = createAsyncThunk("videos/createVideoRecord", async (videoData: VideoFormData & { filename: string }) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos`, {
     method: "POST",
     headers: {
@@ -107,7 +107,7 @@ export const createVideoRecord = createAsyncThunk("videos/createVideoRecord", as
 
 export const updateVideoRecord = createAsyncThunk("videos/updateVideoRecord", async (params: { id: string; videoData: VideoFormData }) => {
   const { id, videoData } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/${id}`, {
     method: "PUT",
     headers: {
@@ -124,7 +124,7 @@ export const updateVideoRecord = createAsyncThunk("videos/updateVideoRecord", as
 });
 
 export const deleteVideoRecord = createAsyncThunk("videos/deleteVideoRecord", async (videoId: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/${videoId}`, {
     method: "DELETE",
   });

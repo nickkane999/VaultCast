@@ -134,7 +134,7 @@ export const fetchMovies = createAsyncThunk(
   ) => {
     const { page = 1, limit = 12, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, showUnrecorded, searchQuery, sortBy = "release_date", sortOrder = "desc" } = params;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -167,7 +167,7 @@ export const fetchMovies = createAsyncThunk(
 );
 
 export const createMovieRecord = createAsyncThunk("movies/createMovieRecord", async (movieData: MovieFormData & { filename: string }) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/movies`, {
     method: "POST",
     headers: {
@@ -185,7 +185,7 @@ export const createMovieRecord = createAsyncThunk("movies/createMovieRecord", as
 
 export const updateMovieRecord = createAsyncThunk("movies/updateMovieRecord", async (params: { id: string; movieData: MovieFormData }) => {
   const { id, movieData } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/movies/${id}`, {
     method: "PUT",
     headers: {
@@ -202,7 +202,7 @@ export const updateMovieRecord = createAsyncThunk("movies/updateMovieRecord", as
 });
 
 export const deleteMovieRecord = createAsyncThunk("movies/deleteMovieRecord", async (movieId: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/movies/${movieId}`, {
     method: "DELETE",
   });

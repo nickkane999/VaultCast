@@ -5,7 +5,7 @@ import VideoPlayer from "@/lib/components/VideoPlayer";
 import TrailerButton from "@/lib/components/TrailerButton";
 
 async function getVideoRecord(id: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   try {
     // Try movies first
     let response = await fetch(`${baseUrl}/api/videos/movies/${id}`, {

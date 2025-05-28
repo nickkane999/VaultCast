@@ -37,9 +37,50 @@ export type { ProjectsState, ProjectFormState } from "./projectsSlice";
 export type { CommonDecisionsState } from "./commonDecisionsSlice";
 export type { EssentialsState, Essential } from "./essentialsSlice";
 
-// Re-export actions for easy import
-export * from "./eventsSlice";
-export * from "./tasksSlice";
-export * from "./projectsSlice";
-export * from "./commonDecisionsSlice";
-export * from "./essentialsSlice";
+// Re-export specific actions to avoid naming conflicts
+export { fetchCalendarEvents, createEvent, updateEventThunk, deleteEventThunk, setEventShowForm, setNewEvent, updateNewEvent, setEditingEventId, setEditedEvent, updateEditedEvent, setEventDecision, setDateFilter, setSortOrder, setHidePastDates, setCalendarEvents } from "./eventsSlice";
+export {
+  fetchTasks,
+  createTask,
+  updateTaskThunk,
+  deleteTaskThunk,
+  setTaskShowForm,
+  setNewTask,
+  updateNewTask,
+  setEditingTaskId,
+  setEditedTask,
+  updateEditedTask,
+  setEditedTaskTags,
+  setTaskDecision,
+  setTagFilter,
+  setTaskStatusFilter,
+  setAddTagInputValue,
+  setNewTagInput,
+  setTaskNotification,
+  setProjectFilter,
+  setTaskCompletionDialogOpen,
+  setTaskCompletionDescription,
+  setCompletingTaskId,
+  setTasks,
+} from "./tasksSlice";
+export {
+  fetchProjects,
+  createProject,
+  updateProjectThunk,
+  deleteProjectThunk,
+  setProjectShowForm,
+  setNewProject,
+  updateNewProject,
+  setEditingProjectId,
+  setEditedProject,
+  updateEditedProject,
+  setProjectStatusFilter,
+  setSortOrder as setProjectSortOrder,
+  setHidePastDates as setProjectHidePastDates,
+  setProjectCompletionDialogOpen,
+  setProjectCompletionDescription,
+  setCompletingProjectId,
+  setProjects,
+} from "./projectsSlice";
+export { fetchCommonDecisions, createDecision, updateDecisionThunk, deleteDecisionThunk, setDecisionShowForm, setNewDecision, updateNewDecision, setEditingDecisionId, setEditedDecision, updateEditedDecision, setCommonDecisionResult, setCommonDecisions } from "./commonDecisionsSlice";
+export { fetchEssentials, createEssential, completeEssential, updateEssential, deleteEssential, setShowForm, setNewEssential, updateNewEssential, setEditingEssentialId, setEditedEssential, updateEditedEssential, setEssentialDecision, setEssentials } from "./essentialsSlice";

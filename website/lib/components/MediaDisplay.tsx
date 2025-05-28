@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "@/app/page.module.css";
 
-const CONTENT_SERVER_URL = "http://localhost:3001";
+const CONTENT_SERVER_URL = process.env.NEXT_PUBLIC_CONTENT_SERVER_URL || "http://127.0.0.1:3001";
 
 interface MediaDisplayProps {
   type: "image" | "video" | "file";

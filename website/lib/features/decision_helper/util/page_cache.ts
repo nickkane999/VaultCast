@@ -2,7 +2,7 @@ import { revalidateTag } from "next/cache";
 import { Task, Event, CommonDecision, Project, Essential } from "../types";
 
 export async function fetchDecisionHelperData() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
 
   try {
     const [tasksRes, projectsRes, eventsRes, decisionsRes, essentialsRes] = await Promise.all([

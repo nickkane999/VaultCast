@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-analysis
+  namespace: vaultcast
+  labels:
+    app: image-analysis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-analysis
+  template:
+    metadata:
+      labels:
+        app: image-analysis
+    spec:
+      containers:
+        - name: image-analysis
+          image: vaultcast-image-analysis:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3003
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3003"
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: vaultcast-config
+                  key: ALLOWED_ORIGINS
+            - name: ENABLE_TENSORFLOW_MODELS
+              valueFrom:
+                configMapKeyRef:
+                  name: vaultcast-config
+                  key: ENABLE_TENSORFLOW_MODELS
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vaultcast-secrets
+                  key: openai-api-key
+            - name: GOOGLE_VISION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vaultcast-secrets
+                  key: google-vision-api-key
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: vaultcast-secrets
+                  key: aws-access-key-id
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vaultcast-secrets
+                  key: aws-secret-access-key
+                  optional: true
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: vaultcast-secrets
+                  key: AWS_REGION
+                  optional: true
+          volumeMounts:
+            - name: uploads-storage
+              mountPath: /app/uploads
+            - name: models-storage
+              mountPath: /app/models
+            - name: temp-volume
+              mountPath: /app/temp
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3003
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: uploads-storage
+          persistentVolumeClaim:
+            claimName: image-analysis-uploads-pvc
+        - name: models-storage
+          persistentVolumeClaim:
+            claimName: image-analysis-models-pvc
+        - name: temp-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-analysis-service
+  namespace: vaultcast
+spec:
+  selector:
+    app: image-analysis
+  ports:
+    - protocol: TCP
+      port: 3003
+      targetPort: 3003
+      nodePort: 30003
+  type: NodePort

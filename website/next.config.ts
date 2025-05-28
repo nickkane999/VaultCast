@@ -1,6 +1,10 @@
 import { NextConfig } from "next";
 
 const config: NextConfig = {
+  output: "standalone",
+  experimental: {
+    serverComponentsExternalPackages: [],
+  },
   images: {
     remotePatterns: [
       {
@@ -11,9 +15,9 @@ const config: NextConfig = {
       },
     ],
   },
-  // Allow connections from any host
-  hostname: "0.0.0.0",
-  port: 3000,
+  env: {
+    HOSTNAME: "127.0.0.1",
+  },
 };
 
 export default config;

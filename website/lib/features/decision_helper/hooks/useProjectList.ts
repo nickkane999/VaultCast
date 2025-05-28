@@ -11,8 +11,8 @@ import {
   updateProjectThunk,
   deleteProjectThunk,
   setProjectStatusFilter,
-  setSortOrder,
-  setHidePastDates,
+  setProjectSortOrder,
+  setProjectHidePastDates,
   setProjectCompletionDialogOpen,
   setProjectCompletionDescription,
   setCompletingProjectId,
@@ -228,8 +228,8 @@ export const useProjectList = ({ initialProjects }: UseProjectListProps) => {
     setShowForm: (show: boolean) => dispatch(setProjectShowForm(show)),
     setEditingId: (id: string | number | null) => dispatch(setEditingProjectId(id)),
     setStatusFilter: (filter: "All" | "Completed" | "Not Completed") => dispatch(setProjectStatusFilter(filter)),
-    setSortOrder: (order: "Ascending" | "Descending") => dispatch(setSortOrder(order)),
-    setHidePastDates: (hide: boolean) => dispatch(setHidePastDates(hide)),
+    setSortOrder: (order: "Ascending" | "Descending") => dispatch(setProjectSortOrder(order)),
+    setHidePastDates: (hide: boolean) => dispatch(setProjectHidePastDates(hide)),
     setCompletionDescription: (description: string) => dispatch(setProjectCompletionDescription(description)),
   };
 };
