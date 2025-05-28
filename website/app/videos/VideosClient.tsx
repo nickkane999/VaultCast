@@ -95,14 +95,14 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
     if (editingVideoId) {
       handleUpdateVideo(formData);
     } else {
-      const videoFilename = videos.find((v) => v.id.startsWith("temp_"))?.filename;
+      const videoFilename = videos.find((v: VideoRecord) => v.id.startsWith("temp_"))?.filename;
       if (videoFilename) {
         handleCreateVideo({ ...formData, filename: videoFilename });
       }
     }
   };
 
-  const editingVideo = editingVideoId ? videos.find((v) => v.id === editingVideoId) || undefined : undefined;
+  const editingVideo = editingVideoId ? videos.find((v: VideoRecord) => v.id === editingVideoId) || undefined : undefined;
 
   const handleSearchSubmit = () => {
     const trimmedSearch = searchInput.trim();
@@ -184,7 +184,7 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
         </Typography>
       </Box>
 
-      {showCreateForm && <VideoForm video={editingVideo} onSubmit={handleFormSubmit} onCancel={handleCancelForm} mode={editingVideoId ? "edit" : "create"} />}
+      {showCreateForm && <VideoForm video={editingVideo} onSubmit={handleFormSubmit} onCancel={handleCancelForm} mode={editingVideoId ? "edit" : "create"} type="movie" />}
 
       {loading && !showCreateForm && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -202,7 +202,7 @@ function VideosContent({ initialData, refreshAction }: VideosClientProps) {
               mb: 4,
             }}
           >
-            {videos.map((video) => (
+            {videos.map((video: VideoRecord) => (
               <VideoCard
                 key={video.id}
                 video={video}

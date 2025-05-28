@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     // Get template info for design context
     if (actualTemplateId) {
-      const templatesResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/ai_emailer/designs?type=templates`);
+      const templatesResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000"}/api/ai_emailer/designs?type=templates`);
       const templatesData = await templatesResponse.json();
       const template = templatesData.templates.find((t: any) => t.id === actualTemplateId);
 
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         const finalCustomizations = { ...customizations, ...parsedResponse };
 
         // Generate the final HTML using the template
-        const previewResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/ai_emailer/designs/preview`, {
+        const previewResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000"}/api/ai_emailer/designs/preview`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

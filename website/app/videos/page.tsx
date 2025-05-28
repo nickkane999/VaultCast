@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Tabs, Tab, Typography } from "@mui/material";
+import { Box, Tabs, Tab, Typography, CircularProgress } from "@mui/material";
 import { Movie, Tv } from "@mui/icons-material";
 import { Provider } from "react-redux";
 import { store } from "@/store/store";
@@ -32,7 +32,7 @@ function a11yProps(index: number) {
   };
 }
 
-export default function VideosPage() {
+function VideosPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -78,59 +78,73 @@ export default function VideosPage() {
   };
 
   return (
-    <Provider store={store}>
-      <Box sx={{ width: "100%", p: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: "center" }}>
-          Video Library
-        </Typography>
+    <Box sx={{ width: "100%", p: 3 }}>
+      <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: "center" }}>
+        Video Library
+      </Typography>
 
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            aria-label="video library tabs"
-            centered
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="video library tabs"
+          centered
+          sx={{
+            "& .MuiTab-root": {
+              minWidth: 120,
+              fontSize: "1.1rem",
+              fontWeight: 500,
+            },
+          }}
+        >
+          <Tab
+            icon={<Movie />}
+            label="Movies"
+            {...a11yProps(0)}
             sx={{
-              "& .MuiTab-root": {
-                minWidth: 120,
-                fontSize: "1.1rem",
-                fontWeight: 500,
+              "&.Mui-selected": {
+                color: "primary.main",
+                fontWeight: 600,
               },
             }}
-          >
-            <Tab
-              icon={<Movie />}
-              label="Movies"
-              {...a11yProps(0)}
-              sx={{
-                "&.Mui-selected": {
-                  color: "primary.main",
-                  fontWeight: 600,
-                },
-              }}
-            />
-            <Tab
-              icon={<Tv />}
-              label="TV Shows"
-              {...a11yProps(1)}
-              sx={{
-                "&.Mui-selected": {
-                  color: "primary.main",
-                  fontWeight: 600,
-                },
-              }}
-            />
-          </Tabs>
-        </Box>
-
-        <TabPanel value={tabValue} index={0}>
-          <MoviesClient />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          <TVShowsClient />
-        </TabPanel>
+          />
+          <Tab
+            icon={<Tv />}
+            label="TV Shows"
+            {...a11yProps(1)}
+            sx={{
+              "&.Mui-selected": {
+                color: "primary.main",
+                fontWeight: 600,
+              },
+            }}
+          />
+        </Tabs>
       </Box>
+
+      <TabPanel value={tabValue} index={0}>
+        <MoviesClient />
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        <TVShowsClient />
+      </TabPanel>
+    </Box>
+  );
+}
+
+export default function VideosPage() {
+  return (
+    <Provider store={store}>
+      <Suspense
+        fallback={
+          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+            <CircularProgress />
+          </Box>
+        }
+      >
+        <VideosPageContent />
+      </Suspense>
     </Provider>
   );
 }

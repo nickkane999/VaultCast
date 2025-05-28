@@ -1,7 +1,7 @@
 import { VideoRecord } from "../types";
 
 export async function fetchVideosData(page: number = 1, limit: number = 12, yearFilter?: string, sortBy: string = "release_date", sortOrder: string = "desc") {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
 
   try {
     const params = new URLSearchParams({

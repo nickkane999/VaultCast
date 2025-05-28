@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: content-server-media-pv
+  namespace: vaultcast
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  hostPath:
+    path: /data/vaultcast/media
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: image-analysis-uploads-pv
+  namespace: vaultcast
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  hostPath:
+    path: /data/vaultcast/uploads
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: image-analysis-models-pv
+  namespace: vaultcast
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  hostPath:
+    path: /data/vaultcast/models
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: content-server-media-pvc
+  namespace: vaultcast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-analysis-uploads-pvc
+  namespace: vaultcast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-analysis-models-pvc
+  namespace: vaultcast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-storage

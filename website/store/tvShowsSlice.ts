@@ -156,7 +156,7 @@ export const fetchTVShows = createAsyncThunk(
   ) => {
     const { page = 1, limit = 12, showFilter, seasonFilter, yearFilter, actorFilter, genreFilter, runtimeMin, runtimeMax, ratingMin, ratingMax, showUnrecorded, searchQuery, sortBy = "air_date", sortOrder = "desc" } = params;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -191,7 +191,7 @@ export const fetchTVShows = createAsyncThunk(
 );
 
 export const createTVEpisodeRecord = createAsyncThunk("tvShows/createTVEpisodeRecord", async (episodeData: TVEpisodeFormData & { filename: string }) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/tv`, {
     method: "POST",
     headers: {
@@ -209,7 +209,7 @@ export const createTVEpisodeRecord = createAsyncThunk("tvShows/createTVEpisodeRe
 
 export const updateTVEpisodeRecord = createAsyncThunk("tvShows/updateTVEpisodeRecord", async (params: { id: string; episodeData: TVEpisodeFormData }) => {
   const { id, episodeData } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/tv/${id}`, {
     method: "PUT",
     headers: {
@@ -226,7 +226,7 @@ export const updateTVEpisodeRecord = createAsyncThunk("tvShows/updateTVEpisodeRe
 });
 
 export const deleteTVEpisodeRecord = createAsyncThunk("tvShows/deleteTVEpisodeRecord", async (episodeId: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
   const response = await fetch(`${baseUrl}/api/videos/tv/${episodeId}`, {
     method: "DELETE",
   });

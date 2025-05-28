@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || "localhost"; // Only bind to localhost by default
+const HOST = process.env.HOST || "0.0.0.0"; // Bind to all interfaces for Docker
 
 // Enhanced security headers
 app.use((req, res, next) => {

@@ -1,8 +1,8 @@
 import { MessageProfile } from "../types";
 
 export async function fetchAiMessengerData() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const filesUrl = process.env.NEXT_PUBLIC_FILES_URL || "http://localhost:3001";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000";
+  const filesUrl = process.env.NEXT_PUBLIC_FILES_URL || "http://127.0.0.1:3001";
 
   try {
     const [profilesRes, filesRes] = await Promise.all([

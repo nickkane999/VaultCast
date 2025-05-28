@@ -1,0 +1,31 @@
+{
+  "name": "vaultcast",
+  "version": "1.0.0",
+  "description": "VaultCast - AI-powered image analysis and content management platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:website\" \"npm run dev:content-server\" \"npm run dev:image-analysis\"",
+    "dev:website": "cd website && npm run dev",
+    "dev:content-server": "cd content-server && npm run dev",
+    "dev:image-analysis": "cd image-analysis && npm run dev",
+    "build": "npm run build:website && npm run build:content-server && npm run build:image-analysis",
+    "build:website": "cd website && npm run build",
+    "build:content-server": "echo 'Content server uses JavaScript - no build needed'",
+    "build:image-analysis": "cd image-analysis && npm run build",
+    "install:all": "npm install && cd website && npm install && cd ../content-server && npm install && cd ../image-analysis && npm install",
+    "clean": "rm -rf website/node_modules website/.next content-server/node_modules image-analysis/node_modules image-analysis/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "keywords": [
+    "image-analysis",
+    "ai",
+    "content-management",
+    "nextjs",
+    "express",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC"
+}

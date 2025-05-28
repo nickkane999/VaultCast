@@ -51,7 +51,7 @@ export const fetchAvailableFiles = createAsyncThunk<
   }
 >("aiMessenger/fetchAvailableFiles", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch("http://localhost:3001/api/files/ai_messenger");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_CONTENT_SERVER_URL || "http://127.0.0.1:3001"}/api/files/ai_messenger`);
     if (!response.ok) {
       const errorText = await response.text();
       return rejectWithValue(errorText || "Failed to fetch files");
