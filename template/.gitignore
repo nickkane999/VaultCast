@@ -41,4 +41,22 @@ yarn-error.log*
 next-env.d.ts
 
 # project resources
-/lib
+/lib/*
+!/lib/api_util
+
+/app/api/*
+!/app/api/download
+!/app/api/delete
+
+/app/
+!/app/components
+!/app/global.module.css
+!/app/globals.css
+!/app/layout.tsx
+!/app/page.module.css
+!/app/page.tsx
+!/app/download
+!/app/delete
+
+
+/store
