@@ -8,9 +8,10 @@ const Navigation = () => {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/download', label: 'Integrate' },
-    { href: '/apps', label: 'Apps' }
+    { href: "/", label: "Home" },
+    { href: "/download", label: "Integrate" },
+    { href: "/apps", label: "Apps" },
+    { href: '/tools', label: 'Tools' }
   ];
 
   return (

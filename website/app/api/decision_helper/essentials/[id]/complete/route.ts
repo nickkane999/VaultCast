@@ -1,46 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/server/mongodb";
 import { ObjectId } from "mongodb";
-import { parseISO, addDays, format } from "date-fns"; // Import date-fns functions
+import { revalidateTag } from "next/cache";
+import { parseISO, addDays, format } from "date-fns";
 
-export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid Essential ID" }, { status: 400 });
+    const { id } = params;
+
+    if (!id) {
+      return NextResponse.json({ error: "Essential ID is required" }, { status: 400 });
     }
 
-    const collection = await getCollection("essentials");
-    const essential = await collection.findOne({ _id: new ObjectId(id) });
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid essential ID format" }, { status: 400 });
+    }
 
+    const collection = await getCollection("decision_helper_essentials");
+    const essential = await collection.findOne({ _id: new ObjectId(id) });
     if (!essential) {
       return NextResponse.json({ error: "Essential not found" }, { status: 404 });
     }
 
-    // Calculate the new due date
     const currentDueDate = parseISO(essential.due_date);
     const newDueDate = addDays(currentDueDate, essential.interval);
     const formattedNewDueDate = format(newDueDate, "yyyy-MM-dd");
-
-    // Increment completed times
     const newCompletedTimes = (essential.completed_times || 0) + 1;
-
-    // Update the essential item
     const result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: { completed_times: newCompletedTimes, due_date: formattedNewDueDate } });
-
     if (result.matchedCount === 0) {
-      // This case should theoretically not happen if the essential was found initially
-      return NextResponse.json({ error: "Failed to update essential" }, { status: 500 });
+      return NextResponse.json({ error: "Essential not found" }, { status: 404 });
     }
 
-    // Fetch the updated document to return the latest state
     const updatedEssential = await collection.findOne({ _id: new ObjectId(id) });
 
     if (!updatedEssential) {
-      // This case should theoretically not happen if matchedCount > 0, but as a safeguard
-      return NextResponse.json({ error: "Essential updated but not found afterwards" }, { status: 500 });
+      return NextResponse.json({ error: "Essential completed but not found afterwards" }, { status: 500 });
     }
+
+    revalidateTag("essentials");
 
     return NextResponse.json(
       {
@@ -54,7 +51,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       { status: 200 }
     );
   } catch (error: any) {
-    console.error(`Error completing essential with ID ${id}:`, error);
+    console.error(`Error completing essential with ID ${params?.id}:`, error);
     return NextResponse.json({ error: "Failed to complete essential" }, { status: 500 });
   }
 }

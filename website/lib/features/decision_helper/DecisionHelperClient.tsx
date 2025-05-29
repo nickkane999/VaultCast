@@ -32,7 +32,6 @@ function DecisionHelperContent({ initialData, refreshAction }: DecisionHelperCli
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize Redux store with server-fetched data
   useEffect(() => {
     dispatch(setTasks(initialData.tasks));
     dispatch(setCalendarEvents(initialData.events));

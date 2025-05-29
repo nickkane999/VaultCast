@@ -3,7 +3,7 @@ import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typo
 import { ExpandMore, Palette, Edit } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import "@/store/aiEmailerSlice";
+import "./store/aiEmailerSlice";
 import { useEditAiResponse, useEmailFormHandlers } from "./useEmailForm";
 import IsolatedTextField from "@/lib/components/IsolatedTextField";
 

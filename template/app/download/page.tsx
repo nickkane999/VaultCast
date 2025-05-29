@@ -68,6 +68,7 @@ const getStepTitle = (step: string) => {
     initialization: "Initializing Integration",
     server_services: "Copying Server & Services",
     feature_copy: "Copying Feature Files",
+    store_slice: "Copying Global Store Slice",
     packages: "Installing Packages",
     api_routes: "Creating API Routes",
     store: "Configuring Redux Store",

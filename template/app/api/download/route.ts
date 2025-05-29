@@ -35,7 +35,120 @@ function createProgressStream() {
   return { stream, sendUpdate, close };
 }
 
-async function copyDirectory(src: string, dest: string): Promise<void> {
+async function fixImportPaths(filePath: string, featureName: string): Promise<void> {
+  if (!filePath.endsWith(".ts") && !filePath.endsWith(".tsx")) {
+    return;
+  }
+
+  try {
+    let content = await fs.promises.readFile(filePath, "utf-8");
+    let modified = false;
+
+    // For ai_emailer, only fix the import paths, don't rename functions
+    if (featureName === "ai_emailer") {
+      // Only fix import paths from global store to local store
+      const globalStoreImports = [`@/store/aiEmailerSlice`];
+
+      globalStoreImports.forEach((globalImport) => {
+        const sliceName = globalImport.split("/").pop();
+        const localImport = `./store/${sliceName}`;
+
+        if (content.includes(`from "${globalImport}"`)) {
+          content = content.replace(new RegExp(`from "${globalImport.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`, "g"), `from "${localImport}"`);
+          modified = true;
+        }
+
+        if (content.includes(`from '${globalImport}'`)) {
+          content = content.replace(new RegExp(`from '${globalImport.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}'`, "g"), `from '${localImport}'`);
+          modified = true;
+        }
+      });
+
+      if (modified) {
+        await fs.promises.writeFile(filePath, content);
+      }
+      return;
+    }
+
+    // For other features, use the original comprehensive fixing
+    const globalStoreImports = [`@/store/${featureName}Slice`, `@/store/aiMessengerSlice`, `@/store/imageAnalyzerSlice`, `@/store/decisionHelperSlice`];
+
+    globalStoreImports.forEach((globalImport) => {
+      const sliceName = globalImport.split("/").pop();
+      const localImport = `./store/${sliceName}`;
+
+      if (content.includes(`from "${globalImport}"`)) {
+        content = content.replace(new RegExp(`from "${globalImport.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`, "g"), `from "${localImport}"`);
+        modified = true;
+      }
+
+      if (content.includes(`from '${globalImport}'`)) {
+        content = content.replace(new RegExp(`from '${globalImport.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}'`, "g"), `from '${localImport}'`);
+        modified = true;
+      }
+    });
+
+    // Fix Redux toolkit function calls - convert from thunks to direct async thunk calls (for non-ai_emailer features)
+    const thunkReplacements = {
+      handleSubmitThunk: "generateEmailDraft",
+      handleSendEmailThunk: "sendEmail",
+      fetchPastEmailsThunk: "fetchPastEmails",
+      loadPastEmailThunk: "loadEmail",
+      deletePastEmailThunk: "deleteEmail",
+      generateEmailWithDesignThunk: "generateEmailDraft",
+      fetchDesignsThunk: "fetchDesigns",
+      fetchTemplatesForDesignThunk: "fetchTemplates",
+      generateHtmlDesignThunk: "generateEmailDraft",
+      setDraftCustomizations: "setDraftCustomization",
+      setHtmlDesignCustomizations: "setHtmlDesignCustomization",
+    };
+
+    Object.entries(thunkReplacements).forEach(([oldName, newName]) => {
+      if (content.includes(oldName)) {
+        content = content.replace(new RegExp(`\\b${oldName}\\b`, "g"), newName);
+        modified = true;
+      }
+    });
+
+    // Fix specific function call patterns that need payloads
+    const functionCallFixes = [
+      // Fix payload structure for customization functions
+      {
+        pattern: /dispatch\(setDraftCustomization\(\{ \[([^\]]+)\]: ([^}]+) \}\)\)/g,
+        replacement: "dispatch(setDraftCustomization({ field: $1, value: $2 }))",
+      },
+      {
+        pattern: /dispatch\(setHtmlDesignCustomization\(\{ \[([^\]]+)\]: ([^}]+) \}\)\)/g,
+        replacement: "dispatch(setHtmlDesignCustomization({ field: $1, value: $2 }))",
+      },
+      // Fix null values to empty strings for string parameters
+      {
+        pattern: /dispatch\(setSelectedPastEmail\(null\)\)/g,
+        replacement: 'dispatch(setSelectedPastEmail(""))',
+      },
+      // Fix view mode parameter
+      {
+        pattern: /"Raw HTML" \| "Preview"/g,
+        replacement: '"Form" | "Preview"',
+      },
+    ];
+
+    functionCallFixes.forEach((fix) => {
+      if (fix.pattern.test(content)) {
+        content = content.replace(fix.pattern, fix.replacement);
+        modified = true;
+      }
+    });
+
+    if (modified) {
+      await fs.promises.writeFile(filePath, content);
+    }
+  } catch (error) {
+    console.error(`Error fixing imports in ${filePath}:`, error);
+  }
+}
+
+async function copyDirectory(src: string, dest: string, featureName?: string): Promise<void> {
   await fs.promises.mkdir(dest, { recursive: true });
   const entries = await fs.promises.readdir(src, { withFileTypes: true });
 
@@ -44,9 +157,14 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
-      await copyDirectory(srcPath, destPath);
+      await copyDirectory(srcPath, destPath, featureName);
     } else {
       await fs.promises.copyFile(srcPath, destPath);
+
+      // Fix import paths for TypeScript files if we have a feature name
+      if (featureName) {
+        await fixImportPaths(destPath, featureName);
+      }
     }
   }
 }
@@ -233,63 +351,232 @@ async function createPageFromFeature(featureName: string, targetRoute: string, s
 }
 
 async function copyApiRoutes(featureName: string, apiRoutes: { from: string; to: string }[], sendUpdate: (update: ProgressUpdate) => void): Promise<string[]> {
-  if (apiRoutes.length === 0) return [];
-
-  sendUpdate({
-    step: "api_routes",
-    status: "started",
-    details: `Copying ${apiRoutes.length} API routes`,
-    data: { routes: apiRoutes },
-  });
-
   const copiedRoutes: string[] = [];
   const skippedRoutes: string[] = [];
-  const featurePath = path.join(process.cwd(), "lib", "features", featureName);
 
-  for (const route of apiRoutes) {
+  // First, handle automatic API route movement from lib/features/[feature]/api/ to app/api/[feature]/
+  const featureApiPath = path.join(process.cwd(), "lib", "features", featureName, "api");
+  const targetApiPath = path.join(process.cwd(), "app", "api", featureName);
+
+  let hasApiDirectory = false;
+
+  if (fs.existsSync(featureApiPath)) {
+    hasApiDirectory = true;
+
+    sendUpdate({
+      step: "api_routes",
+      status: "started",
+      details: `Moving API routes from lib/features/${featureName}/api/ to app/api/${featureName}/`,
+      data: { featureName, from: `lib/features/${featureName}/api/`, to: `app/api/${featureName}/` },
+    });
+
     try {
-      const destPath = path.join(process.cwd(), route.to);
+      // Copy the entire API directory
+      if (!fs.existsSync(targetApiPath)) {
+        await copyDirectory(featureApiPath, targetApiPath);
 
-      if (fs.existsSync(destPath)) {
-        skippedRoutes.push(route.to);
-        continue;
-      }
+        // Fix import paths in all copied API files
+        await fixApiImportPaths(targetApiPath, featureName);
 
-      const sourcePath = path.join(featurePath, route.from.replace(`lib/features/${featureName}/`, ""));
+        copiedRoutes.push(`app/api/${featureName}/`);
 
-      if (fs.existsSync(sourcePath)) {
-        await copyFile(sourcePath, destPath);
-        copiedRoutes.push(route.to);
+        sendUpdate({
+          step: "api_routes",
+          status: "completed",
+          details: `API routes moved to app/api/${featureName}/`,
+          data: { moved: true, path: `app/api/${featureName}/` },
+        });
+      } else {
+        skippedRoutes.push(`app/api/${featureName}/`);
+
+        sendUpdate({
+          step: "api_routes",
+          status: "skipped",
+          details: `API directory already exists at app/api/${featureName}/`,
+          data: { skipped: true, path: `app/api/${featureName}/` },
+        });
       }
     } catch (error: any) {
-      console.error(`Error copying API route ${route.from} to ${route.to}:`, error);
+      sendUpdate({
+        step: "api_routes",
+        status: "error",
+        details: `Error moving API routes: ${error.message}`,
+        data: { error: error.message },
+      });
     }
   }
 
-  const statusDetails = [copiedRoutes.length > 0 ? `Created ${copiedRoutes.length} routes` : "", skippedRoutes.length > 0 ? `Skipped ${skippedRoutes.length} existing routes` : ""].filter(Boolean).join(", ");
+  // Then handle any additional specific API routes from the installation file
+  if (apiRoutes.length > 0) {
+    if (!hasApiDirectory) {
+      sendUpdate({
+        step: "api_routes",
+        status: "started",
+        details: `Copying ${apiRoutes.length} specific API routes`,
+        data: { routes: apiRoutes },
+      });
+    }
 
-  sendUpdate({
-    step: "api_routes",
-    status: "completed",
-    details: statusDetails || "API routes processed",
-    data: { copied: copiedRoutes, skipped: skippedRoutes },
-  });
+    const featurePath = path.join(process.cwd(), "lib", "features", featureName);
+
+    for (const route of apiRoutes) {
+      try {
+        const destPath = path.join(process.cwd(), route.to);
+
+        if (fs.existsSync(destPath)) {
+          skippedRoutes.push(route.to);
+          continue;
+        }
+
+        const sourcePath = path.join(featurePath, route.from.replace(`lib/features/${featureName}/`, ""));
+
+        if (fs.existsSync(sourcePath)) {
+          await copyFile(sourcePath, destPath);
+
+          // Fix import paths in the copied file
+          await fixApiImportPaths(destPath, featureName, true);
+
+          copiedRoutes.push(route.to);
+        }
+      } catch (error: any) {
+        console.error(`Error copying API route ${route.from} to ${route.to}:`, error);
+      }
+    }
+  }
+
+  // Generate final status message
+  if (hasApiDirectory || apiRoutes.length > 0) {
+    const totalProcessed = copiedRoutes.length + skippedRoutes.length;
+    const statusDetails = [copiedRoutes.length > 0 ? `Moved/created ${copiedRoutes.length} API route${copiedRoutes.length > 1 ? "s" : ""}` : "", skippedRoutes.length > 0 ? `Skipped ${skippedRoutes.length} existing route${skippedRoutes.length > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ");
+
+    if (!hasApiDirectory) {
+      sendUpdate({
+        step: "api_routes",
+        status: "completed",
+        details: statusDetails || "API routes processed",
+        data: { copied: copiedRoutes, skipped: skippedRoutes },
+      });
+    }
+  } else {
+    sendUpdate({
+      step: "api_routes",
+      status: "skipped",
+      details: `No API routes found for ${featureName}`,
+      data: { featureName },
+    });
+  }
 
   return copiedRoutes;
 }
 
+async function fixApiImportPaths(apiPath: string, featureName: string, isSingleFile: boolean = false): Promise<void> {
+  try {
+    if (isSingleFile) {
+      // Handle single file
+      if (apiPath.endsWith(".ts") || apiPath.endsWith(".tsx")) {
+        await fixApiFileImports(apiPath, featureName);
+      }
+    } else {
+      // Handle directory recursively
+      const entries = await fs.promises.readdir(apiPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(apiPath, entry.name);
+
+        if (entry.isDirectory()) {
+          await fixApiImportPaths(fullPath, featureName, false);
+        } else if (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")) {
+          await fixApiFileImports(fullPath, featureName);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`Error fixing API import paths in ${apiPath}:`, error);
+  }
+}
+
+async function fixApiFileImports(filePath: string, featureName: string): Promise<void> {
+  try {
+    let content = await fs.promises.readFile(filePath, "utf-8");
+    let modified = false;
+
+    // Fix imports that reference the feature's store or utilities
+    const importFixes: { pattern: RegExp; replacement: string }[] = [
+      // Fix relative imports to the feature store
+      {
+        pattern: /from ['"]\.\.\/\.\.\/store\/([^'"]+)['"]/g,
+        replacement: `from '@/lib/features/${featureName}/store/$1'`,
+      },
+      // Fix relative imports to feature utilities
+      {
+        pattern: /from ['"]\.\.\/utils\/([^'"]+)['"]/g,
+        replacement: `from '@/lib/features/${featureName}/api/utils/$1'`,
+      },
+      // Fix relative imports to other API files within the same feature
+      {
+        pattern: /from ['"]\.\.\/([^'"]+)['"]/g,
+        replacement: `from '@/lib/features/${featureName}/api/$1'`,
+      },
+      // Fix server/database imports
+      {
+        pattern: /from ['"]@\/lib\/server\/([^'"]+)['"]/g,
+        replacement: `from '@/lib/server/$1'`,
+      },
+      // Fix global store imports to feature store
+      {
+        pattern: /from ['"]@\/store\/([^'"]+)['"]/g,
+        replacement: `from '@/lib/features/${featureName}/store/$1'`,
+      },
+    ];
+
+    importFixes.forEach(({ pattern, replacement }) => {
+      if (pattern.test(content)) {
+        content = content.replace(pattern, replacement);
+        modified = true;
+      }
+    });
+
+    // Handle the special case for relative imports from current directory
+    const currentDirPattern = /from ['"]\.\/([^'"]+)['"]/g;
+    if (currentDirPattern.test(content)) {
+      content = content.replace(currentDirPattern, (match: string, p1: string) => {
+        if (p1 === "route" || p1.endsWith(".ts") || p1.endsWith(".tsx")) {
+          return `from './${p1}'`;
+        }
+        return `from '@/lib/features/${featureName}/api/${p1}'`;
+      });
+      modified = true;
+    }
+
+    if (modified) {
+      await fs.promises.writeFile(filePath, content);
+    }
+  } catch (error) {
+    console.error(`Error fixing imports in API file ${filePath}:`, error);
+  }
+}
+
 async function updateStore(featureName: string, storeIntegration: string | null, sendUpdate: (update: ProgressUpdate) => void): Promise<boolean> {
-  if (!storeIntegration) return true;
+  const storePath = path.join(process.cwd(), "store", "store.ts");
 
-  const storePath = path.join(process.cwd(), "store", "store.ts"); // Fixed: use store.ts not index.ts
-
+  // Check if store already has this feature configured
   if (fs.existsSync(storePath)) {
     const storeContent = await fs.promises.readFile(storePath, "utf-8");
-    if (storeContent.includes("aiMessenger: aiMessengerReducer")) {
+
+    // Check for different reducer names based on feature
+    const reducerNames: Record<string, string> = {
+      ai_messenger: "aiMessenger",
+      ai_emailer: "aiEmailer",
+      image_analyzer: "imageAnalyzer",
+      decision_helper: "decisionHelper",
+    };
+
+    const reducerName = reducerNames[featureName];
+    if (reducerName && storeContent.includes(`${reducerName}: ${reducerName}Reducer`)) {
       sendUpdate({
         step: "store",
         status: "skipped",
-        details: "Store already configured with aiMessenger reducer",
+        details: `Store already configured with ${featureName} reducer`,
         data: { existing: true },
       });
       return true;
@@ -305,12 +592,31 @@ async function updateStore(featureName: string, storeIntegration: string | null,
 
   try {
     if (!fs.existsSync(storePath)) {
+      // Create new store file with the feature reducer
+      const reducerNames: Record<string, string> = {
+        ai_messenger: "aiMessenger",
+        ai_emailer: "aiEmailer",
+        image_analyzer: "imageAnalyzer",
+        decision_helper: "decisionHelper",
+      };
+
+      // Map feature names to slice file names (camelCase)
+      const sliceFileNames: Record<string, string> = {
+        ai_messenger: "aiMessengerSlice",
+        ai_emailer: "aiEmailerSlice",
+        image_analyzer: "imageAnalyzerSlice",
+        decision_helper: "decisionHelperSlice",
+      };
+
+      const reducerName = reducerNames[featureName] || featureName;
+      const sliceFileName = sliceFileNames[featureName] || `${featureName}Slice`;
+
       const storeContent = `import { configureStore } from '@reduxjs/toolkit';
-import aiMessengerReducer from '@/lib/features/${featureName}/store/aiMessengerSlice';
+import ${reducerName}Reducer from '@/lib/features/${featureName}/store/${sliceFileName}';
 
 export const store = configureStore({
   reducer: {
-    aiMessenger: aiMessengerReducer,
+    ${reducerName}: ${reducerName}Reducer,
   },
 });
 
@@ -321,9 +627,30 @@ export type AppDispatch = typeof store.dispatch;
       await fs.promises.mkdir(path.dirname(storePath), { recursive: true });
       await fs.promises.writeFile(storePath, storeContent);
     } else {
+      // Update existing store file
       let storeContent = await fs.promises.readFile(storePath, "utf-8");
 
-      const importLine = `import aiMessengerReducer from '@/lib/features/${featureName}/store/aiMessengerSlice';`;
+      const reducerNames: Record<string, string> = {
+        ai_messenger: "aiMessenger",
+        ai_emailer: "aiEmailer",
+        image_analyzer: "imageAnalyzer",
+        decision_helper: "decisionHelper",
+      };
+
+      // Map feature names to slice file names (camelCase)
+      const sliceFileNames: Record<string, string> = {
+        ai_messenger: "aiMessengerSlice",
+        ai_emailer: "aiEmailerSlice",
+        image_analyzer: "imageAnalyzerSlice",
+        decision_helper: "decisionHelperSlice",
+      };
+
+      const reducerName = reducerNames[featureName] || featureName;
+      const sliceFileName = sliceFileNames[featureName] || `${featureName}Slice`;
+
+      const importLine = `import ${reducerName}Reducer from '@/lib/features/${featureName}/store/${sliceFileName}';`;
+
+      // Add import if not present
       if (!storeContent.includes(importLine)) {
         const configureStoreImportMatch = storeContent.match(/(import.*configureStore.*;\n)/);
         if (configureStoreImportMatch) {
@@ -331,11 +658,12 @@ export type AppDispatch = typeof store.dispatch;
         }
       }
 
-      if (!storeContent.includes("aiMessenger: aiMessengerReducer")) {
+      // Add reducer if not present
+      if (!storeContent.includes(`${reducerName}: ${reducerName}Reducer`)) {
         const reducerMatch = storeContent.match(/(reducer:\s*\{[\s\S]*?)\}/);
         if (reducerMatch) {
           const beforeClosing = reducerMatch[1];
-          const newReducerContent = beforeClosing.includes("// Add your reducers here") ? beforeClosing.replace("// Add your reducers here", "aiMessenger: aiMessengerReducer,") : beforeClosing + "\n    aiMessenger: aiMessengerReducer,";
+          const newReducerContent = beforeClosing.includes("// Add your reducers here") ? beforeClosing.replace("// Add your reducers here", `${reducerName}: ${reducerName}Reducer,`) : beforeClosing + `\n    ${reducerName}: ${reducerName}Reducer,`;
           storeContent = storeContent.replace(reducerMatch[1] + "}", newReducerContent + "\n  }");
         }
       }
@@ -356,6 +684,133 @@ export type AppDispatch = typeof store.dispatch;
       step: "store",
       status: "error",
       details: `Error updating store: ${error.message}`,
+      data: { error: error.message },
+    });
+    return false;
+  }
+}
+
+async function copyGlobalStoreSlices(featureName: string, sendUpdate: (update: ProgressUpdate) => void): Promise<boolean> {
+  // For ai_emailer, copy from the feature's local store instead of global store
+  if (featureName === "ai_emailer") {
+    const websiteFeatureStorePath = path.join(process.cwd(), "..", "website", "lib", "features", featureName, "store");
+    const templateFeatureStorePath = path.join(process.cwd(), "lib", "features", featureName, "store");
+    const sliceFileName = "aiEmailerSlice.ts";
+
+    const sourceSlicePath = path.join(websiteFeatureStorePath, sliceFileName);
+    const targetSlicePath = path.join(templateFeatureStorePath, sliceFileName);
+
+    if (!fs.existsSync(sourceSlicePath)) {
+      sendUpdate({
+        step: "store_slice",
+        status: "skipped",
+        details: `Feature store slice not found for ${featureName}`,
+        data: { featureName },
+      });
+      return true;
+    }
+
+    if (fs.existsSync(targetSlicePath)) {
+      sendUpdate({
+        step: "store_slice",
+        status: "skipped",
+        details: `Feature store slice already exists for ${featureName}`,
+        data: { featureName },
+      });
+      return true;
+    }
+
+    sendUpdate({
+      step: "store_slice",
+      status: "started",
+      details: `Copying feature store slice for ${featureName}`,
+      data: { featureName, sliceFileName },
+    });
+
+    try {
+      await copyFile(sourceSlicePath, targetSlicePath);
+
+      sendUpdate({
+        step: "store_slice",
+        status: "completed",
+        details: `Feature store slice copied for ${featureName}`,
+        data: { featureName, path: `lib/features/${featureName}/store/${sliceFileName}` },
+      });
+
+      return true;
+    } catch (error: any) {
+      sendUpdate({
+        step: "store_slice",
+        status: "error",
+        details: `Error copying feature store slice: ${error.message}`,
+        data: { error: error.message },
+      });
+      return false;
+    }
+  }
+
+  // For other features, use the original global store logic
+  const websiteStorePath = path.join(process.cwd(), "..", "website", "store");
+  const templateStorePath = path.join(process.cwd(), "store");
+
+  // Map feature names to their store slice files
+  const storeSliceMap: Record<string, string> = {
+    ai_messenger: "aiMessengerSlice.ts",
+    image_analyzer: "imageAnalyzerSlice.ts",
+    decision_helper: "decisionHelperSlice.ts",
+  };
+
+  const sliceFileName = storeSliceMap[featureName];
+  if (!sliceFileName) {
+    return true; // No global slice needed for this feature
+  }
+
+  const sourceSlicePath = path.join(websiteStorePath, sliceFileName);
+  const targetSlicePath = path.join(templateStorePath, sliceFileName);
+
+  if (!fs.existsSync(sourceSlicePath)) {
+    sendUpdate({
+      step: "store_slice",
+      status: "skipped",
+      details: `Global store slice not found for ${featureName}`,
+      data: { featureName },
+    });
+    return true;
+  }
+
+  if (fs.existsSync(targetSlicePath)) {
+    sendUpdate({
+      step: "store_slice",
+      status: "skipped",
+      details: `Global store slice already exists for ${featureName}`,
+      data: { featureName },
+    });
+    return true;
+  }
+
+  sendUpdate({
+    step: "store_slice",
+    status: "started",
+    details: `Copying global store slice for ${featureName}`,
+    data: { featureName, sliceFileName },
+  });
+
+  try {
+    await copyFile(sourceSlicePath, targetSlicePath);
+
+    sendUpdate({
+      step: "store_slice",
+      status: "completed",
+      details: `Global store slice copied for ${featureName}`,
+      data: { featureName, path: `store/${sliceFileName}` },
+    });
+
+    return true;
+  } catch (error: any) {
+    sendUpdate({
+      step: "store_slice",
+      status: "error",
+      details: `Error copying store slice: ${error.message}`,
       data: { error: error.message },
     });
     return false;
@@ -456,11 +911,19 @@ function buildRouteStructure(routeConfigs: Record<string, string>): { [key: stri
     const topLevel = parts[0];
     const featureLabel = featureName.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
+    // Helper function to convert kebab-case to proper labels
+    const formatLabel = (text: string) => {
+      return text
+        .split(/[-_\s]+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+    };
+
     // Initialize top level if it doesn't exist
     if (!structure[topLevel]) {
       structure[topLevel] = {
         path: `/${topLevel}`,
-        label: topLevel.replace(/\b\w/g, (l) => l.toUpperCase()),
+        label: formatLabel(topLevel),
         features: [],
         children: {},
       };
@@ -484,7 +947,7 @@ function buildRouteStructure(routeConfigs: Record<string, string>): { [key: stri
         if (!current.children[part]) {
           current.children[part] = {
             path: partPath,
-            label: part.replace(/\b\w/g, (l) => l.toUpperCase()),
+            label: formatLabel(part),
             features: [],
             children: {},
           };
@@ -526,12 +989,19 @@ async function createIndexPage(structure: RouteStructure, sendUpdate: (update: P
   });
 
   try {
+    // Convert kebab-case to PascalCase for function name
+    const functionName =
+      structure.label
+        .split(/[-\s]+/) // Split on hyphens and spaces
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join("") + "Page";
+
     const pageContent = `'use client';
 
 import Link from 'next/link';
 import styles from './page.module.css';
 
-export default function ${structure.label.replace(/\s+/g, "")}Page() {
+export default function ${functionName}() {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -888,11 +1358,16 @@ export default Navigation;
         const beforeNavItems = navContent.substring(0, navItemsStart);
         const afterNavItems = navContent.substring(navItemsEnd);
 
-        const existingItems = ["{ href: '/', label: 'Home' }", "{ href: '/download', label: 'Integrate' }"];
+        // Extract existing navigation items from the current file
+        const existingNavItemsText = navContent.substring(navItemsStart, navItemsEnd);
+        const existingItemMatches = existingNavItemsText.match(/\{\s*href:\s*['"][^'"]+['"]\s*,\s*label:\s*['"][^'"]+['"]\s*\}/g);
+        const existingItems = existingItemMatches || ["{ href: '/', label: 'Home' }", "{ href: '/download', label: 'Integrate' }"];
 
         const newItems = topLevelRoutes.map((route) => `{ href: '${route.path}', label: '${route.label}' }`);
 
-        const allItems = [...existingItems, ...newItems];
+        // Merge existing and new items, avoiding duplicates
+        const allItemsSet = new Set([...existingItems, ...newItems]);
+        const allItems = Array.from(allItemsSet);
 
         const newNavItems = `const navItems = [
     ${allItems.join(",\n    ")}
@@ -998,7 +1473,7 @@ export async function POST(request: NextRequest) {
               data: { item },
             });
 
-            await copyDirectory(srcPath, destPath);
+            await copyDirectory(srcPath, destPath, item);
 
             sendUpdate({
               step: "feature_copy",
@@ -1013,6 +1488,9 @@ export async function POST(request: NextRequest) {
           // Parse installation requirements
           const { packages, apiRoutes, storeIntegration } = await parseInstallationFile(destPath);
 
+          // Copy global store slice if needed
+          await copyGlobalStoreSlices(item, sendUpdate);
+
           // Install packages
           if (packages.length > 0) {
             const result = await installPackages(packages, sendUpdate);
@@ -1021,11 +1499,9 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Copy API routes
-          if (apiRoutes.length > 0) {
-            const copiedRoutes = await copyApiRoutes(item, apiRoutes, sendUpdate);
-            totalApiRoutes += copiedRoutes.length;
-          }
+          // Copy API routes (both automatic detection and installation file routes)
+          const copiedRoutes = await copyApiRoutes(item, apiRoutes, sendUpdate);
+          totalApiRoutes += copiedRoutes.length;
 
           // Update store
           const storeResult = await updateStore(item, storeIntegration, sendUpdate);

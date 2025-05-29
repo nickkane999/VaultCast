@@ -1,9 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import aiMessengerReducer from '@/lib/features/ai_messenger/store/aiMessengerSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import aiEmailerReducer from '@/lib/features/ai_emailer/store/aiEmailerSlice';
+import aiMessengerReducer from "@/lib/features/ai_messenger/store/aiMessengerSlice";
 
 export const store = configureStore({
   reducer: {
     aiMessenger: aiMessengerReducer,
+  
+    aiEmailer: aiEmailerReducer,
   },
 });
 
