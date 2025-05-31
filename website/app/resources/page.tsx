@@ -10,6 +10,7 @@ const resourceLinks = [
   { href: "/resources/ai_messenger", primary: "AI Messenger Profiles" },
   { href: "/resources/image_analyzer", primary: "Image Analyzer" },
   { href: "/resources/admin", primary: "Administration Tasks" },
+  { href: "/resources/marketing_links", primary: "Marketing Links" },
   // Add other resource links here
 ];
 

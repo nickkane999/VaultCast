@@ -6,6 +6,7 @@ import moviesReducer from "./moviesSlice";
 import tvShowsReducer from "./tvShowsSlice";
 import videosReducer from "./videosSlice";
 import imageAnalyzerReducer from "./imageAnalyzerSlice";
+import marketingLinksReducer from "@/lib/features/marketing_links/store/marketingLinksSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     tvShows: tvShowsReducer,
     videos: videosReducer,
     imageAnalyzer: imageAnalyzerReducer,
+    marketingLinks: marketingLinksReducer,
   },
 });
 
